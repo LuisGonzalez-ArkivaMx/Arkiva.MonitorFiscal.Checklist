@@ -35,7 +35,7 @@ namespace Arkiva.MonitorFiscal.Checklist
             smtp.Host = "smtp-relay.sendinblue.com"; // smtp.live.com // smtp.gmail.com
             smtp.Port = 587;
             smtp.EnableSsl = true;
-            smtp.Credentials = new NetworkCredential(remitente, "G1gPyU8mCzbNH3tS");
+            smtp.Credentials = new NetworkCredential(remitente, "GZQVvczw5fdO8SX1");
             
             //string output = null;
 

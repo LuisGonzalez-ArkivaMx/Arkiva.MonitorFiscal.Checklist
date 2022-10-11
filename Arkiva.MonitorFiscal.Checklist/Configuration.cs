@@ -151,6 +151,11 @@ namespace Arkiva.MonitorFiscal.Checklist
         [DataMember]
         [TextEditor(IsRequired = true)]
         public MFIdentifier ClaseReferencia { get; set; }
+
+        [MFPropertyDef]
+        [JsonConfEditor(Label = "Propiedad Estatus")]
+        [DataMember]
+        public MFIdentifier EstatusClaseReferencia { get; set; }        
     }
 
     [DataContract]

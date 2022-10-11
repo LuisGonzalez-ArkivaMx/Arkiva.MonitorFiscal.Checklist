@@ -94,12 +94,17 @@ namespace Arkiva.MonitorFiscal.Checklist
                                 .PropertyDefOperations
                                 .GetPropertyDefIDByAlias("PD.DocumentosLeyOutsourcingContactoExterno");
 
+                            var pd_EstatusProveedor = PermanentVault
+                                .PropertyDefOperations
+                                .GetPropertyDefIDByAlias("PD.EstatusProveedorLeyOutsourcing");
+
                             var searchBuilderObject = new MFSearchBuilder(PermanentVault);
                             searchBuilderObject.Deleted(false);
                             searchBuilderObject.ObjType(grupo.ObjectType);
 
                             foreach (var objeto in searchBuilderObject.FindEx())
-                            {
+                            {                                
+                                bool bActivaProcesoChecklist = false;
                                 List<ObjVer> oListaDocumentosVigentes = new List<ObjVer>();
                                 bool bActivaRelacionDeDocumentosVigentes = false;
                                 List<ObjVer> oListaTodosLosDocumentosLO = new List<ObjVer>();
@@ -146,7 +151,7 @@ namespace Arkiva.MonitorFiscal.Checklist
                                     var tipoValidacionLeyOutsourcing = oPropertyValues
                                         .SearchForPropertyEx(pd_TipoDeValidacionLeyDeOutsourcing, true)
                                         .TypedValue
-                                        .GetValueAsLocalizedText();
+                                        .GetLookupID();
 
                                     var nombreOTituloObjetoPadre = oPropertyValues
                                         .SearchForProperty((int)MFBuiltInPropertyDef
@@ -159,8 +164,79 @@ namespace Arkiva.MonitorFiscal.Checklist
                                         .TypedValue
                                         .GetValueAsLocalizedText();
 
-                                    if (tipoValidacionLeyOutsourcing == "Por Proveedor") //bLeyOutsourcing == true
-                                    {                                       
+                                    // Validar tipo de proceso activado
+                                    if(tipoValidacionLeyOutsourcing == 1) // Validacion por Proveedor
+                                    {
+                                        bActivaProcesoChecklist = true;
+
+                                        SysUtils.ReportInfoToEventLog("Proceso 'Por Proveedor' activado: " + bActivaProcesoChecklist);
+                                    }
+                                    else if (tipoValidacionLeyOutsourcing == 2) // Validacion por Orden de Compra, Contrato y/o Proyecto
+                                    {
+                                        foreach (var documentoReferencia in grupo.ClasesReferencia)
+                                        {
+                                            var searchBuilderDocumentosReferencia = new MFSearchBuilder(PermanentVault);
+                                            searchBuilderDocumentosReferencia.Deleted(false);
+                                            searchBuilderDocumentosReferencia.Property
+                                            (
+                                                (int)MFBuiltInPropertyDef.MFBuiltInPropertyDefClass,
+                                                MFDataType.MFDatatypeLookup,
+                                                documentoReferencia.ClaseReferencia.ID
+                                            );
+                                            searchBuilderDocumentosReferencia.Property
+                                            (
+                                                grupo.PropertyDefProveedorSEDocumentos,
+                                                MFDataType.MFDatatypeMultiSelectLookup,
+                                                objeto.ObjVer.ID
+                                            );
+
+                                            var searchResultsDocumentosReferencia = searchBuilderDocumentosReferencia.FindEx();
+
+                                            if (searchResultsDocumentosReferencia.Count > 0)
+                                            {
+                                                foreach (var documento in searchResultsDocumentosReferencia)
+                                                {
+                                                    var oProperties = documento.Properties;
+
+                                                    var iEstatus = oProperties.SearchForPropertyEx(documentoReferencia.EstatusClaseReferencia.ID, true).TypedValue.GetLookupID();
+
+                                                    if (documento.Class == 139) // Orden de Compra Emitida Proveedor
+                                                    {
+                                                        if (iEstatus == 1)
+                                                        {
+                                                            bActivaProcesoChecklist = true;
+                                                            break;
+                                                        }
+                                                    }
+                                                    else if (documento.Class == 113) // Contrato
+                                                    {
+                                                        if (iEstatus == 2 || iEstatus == 4)
+                                                        {
+                                                            bActivaProcesoChecklist = true;
+                                                            break;
+                                                        }
+                                                    }
+                                                    else if ( documento.Class == 236) // Proyecto
+                                                    {
+                                                        if (iEstatus == 1)
+                                                        {
+                                                            bActivaProcesoChecklist = true;
+                                                            break;
+                                                        }
+                                                    }
+                                                    else
+                                                    {
+                                                        bActivaProcesoChecklist = false;
+                                                    }
+                                                }                                                
+                                            }
+                                        }
+                                    }
+
+                                    if (bActivaProcesoChecklist == true)
+                                    {
+                                        SysUtils.ReportInfoToEventLog("Proveedor: " + objeto.Title);
+
                                         string sChecklistDocumentName = "";
                                         bool bConcatenateDocument = false;
                                         string sPeriodoVencimientoDocumentoLO = "";
@@ -571,7 +647,7 @@ namespace Arkiva.MonitorFiscal.Checklist
                                                         iDocumentoID: 0,
                                                         sVigencia: claseDocumento.VigenciaDocumentoProveedor,
                                                         sPeriodo: sPeriodoDocumentoProveedor);
-                                                }
+                                                }                                                
 
                                                 bNotification = true;
                                                 bConcatenateDocument = true;
@@ -587,40 +663,61 @@ namespace Arkiva.MonitorFiscal.Checklist
                                                 oListaDocumentosVigentes);
                                         }
 
+                                        SysUtils.ReportInfoToEventLog("Validacion de proyecto con contrato asociado en el proveedor: " + objeto.Title);
+                                        
                                         // Validar que proyecto asociado al proveedor tenga asociado un contrato (firmado, vigente), de lo contrario crear issue
                                         var ot_Proyecto = objeto.Vault.ObjectTypeOperations.GetObjectTypeIDByAlias("MF.OT.Project");
                                         var cl_Contrato = objeto.Vault.ClassOperations.GetObjectClassIDByAlias("CL.Contrato");
                                         var cl_ProyectoServicioEspecializado = objeto.Vault.ClassOperations.GetObjectClassIDByAlias("CL.ProyectoServicioEspecializado");
                                         var pd_Proveedor = objeto.Vault.PropertyDefOperations.GetPropertyDefIDByAlias("MF.PD.Proveedor");
+                                        var pd_ProyectosRelacionados = objeto.Vault.PropertyDefOperations.GetPropertyDefIDByAlias("MF.PD.Project");
                                         var pd_EstatusProyectoServicioEspecializado = objeto.Vault.PropertyDefOperations.GetPropertyDefIDByAlias("PD.EstatusProyectoServicioEspecializado");                                        
+                                        var pd_TipoContrato = objeto.Vault.PropertyDefOperations.GetPropertyDefIDByAlias("PD.TipoDeContrato");
+                                        var wf_CicloVidaContrato = objeto.Vault.WorkflowOperations.GetWorkflowIDByAlias("MF.WF.ContractLifecycle");
+                                        var wfs_Activo = objeto.Vault.WorkflowOperations.GetWorkflowStateIDByAlias("M-Files.CLM.State.ContractLifecycle.Active");
 
                                         var oLookupProveedor = new Lookup();
                                         var oLookupsProveedor = new Lookups();
 
                                         oLookupProveedor.Item = objeto.ObjVer.ID;
                                         oLookupsProveedor.Add(-1, oLookupProveedor);
-
-                                        // Buscar contratos
-                                        var searchBuilderContrato = new MFSearchBuilder(objeto.Vault);
-                                        searchBuilderContrato.Deleted(false);
-                                        searchBuilderContrato.Class(cl_Contrato);
-                                        searchBuilderContrato.Property(pd_Proveedor, MFDataType.MFDatatypeMultiSelectLookup, oLookupsProveedor);
-
-                                        var searchResultsContrato = searchBuilderContrato.FindEx();
-
-                                        // Buscar proyectos
+                                        
+                                        // Buscar proyectos relacionados al proveedor
                                         var searchBuilderProyecto = new MFSearchBuilder(objeto.Vault);
                                         searchBuilderProyecto.Deleted(false);
                                         searchBuilderProyecto.Class(cl_ProyectoServicioEspecializado);
                                         searchBuilderProyecto.Property(pd_Proveedor, MFDataType.MFDatatypeMultiSelectLookup, oLookupsProveedor);
-
+                                        
                                         var searchResultsProyecto = searchBuilderProyecto.FindEx();
 
-                                        if (searchResultsContrato.Count > 0)
+                                        if (searchResultsProyecto.Count > 0)
                                         {
-                                            if (searchResultsProyecto.Count > 0)
+                                            // Buscar contratos relacionados al proyecto
+                                            var searchBuilderContrato = new MFSearchBuilder(objeto.Vault);
+                                            searchBuilderContrato.Deleted(false);
+                                            searchBuilderContrato.Class(cl_Contrato);
+                                            searchBuilderContrato.Property(pd_Proveedor, MFDataType.MFDatatypeMultiSelectLookup, oLookupsProveedor);
+                                            searchBuilderContrato.Property(pd_TipoContrato, MFDataType.MFDatatypeLookup, 2);
+                                            searchBuilderContrato.Property
+                                            (
+                                                MFBuiltInPropertyDef.MFBuiltInPropertyDefWorkflow,
+                                                MFDataType.MFDatatypeLookup,
+                                                wf_CicloVidaContrato
+                                            );
+                                            searchBuilderContrato.Property
+                                            (
+                                                MFBuiltInPropertyDef.MFBuiltInPropertyDefState,
+                                                MFDataType.MFDatatypeLookup,
+                                                wfs_Activo
+                                            );
+
+                                            var searchResultsContrato = searchBuilderContrato.FindEx();
+
+                                            foreach (var proyecto in searchResultsProyecto)
                                             {
-                                                foreach (var proyecto in searchResultsProyecto)
+                                                SysUtils.ReportInfoToEventLog("Proyecto validado: " + proyecto.Title);
+
+                                                if (searchResultsContrato.Count > 0)
                                                 {
                                                     // Agregar propiedad de estatus de proyecto se y establecer el estatus: Con Contrato Asociado
                                                     var oLookup = new Lookup();
@@ -652,14 +749,9 @@ namespace Arkiva.MonitorFiscal.Checklist
                                                     proyecto.Vault.ObjectOperations.CheckIn(checkedOutObjectVersion.ObjVer);
 
                                                     // Relacionar proyecto y contrato ?
+                                                    SysUtils.ReportInfoToEventLog("Proyecto con contrato asociado");
                                                 }
-                                            }
-                                        }
-                                        else
-                                        {
-                                            if (searchResultsProyecto.Count > 0)
-                                            {
-                                                foreach (var proyecto in searchResultsProyecto)
+                                                else
                                                 {
                                                     // Agregar propiedad de estatus de proyecto se y establecer el estatus: Sin Contrato Asociado
                                                     var oLookup = new Lookup();
@@ -692,8 +784,10 @@ namespace Arkiva.MonitorFiscal.Checklist
 
                                                     // Crear issue
                                                     CreateIssue(objeto, proyecto);
+
+                                                    SysUtils.ReportInfoToEventLog("Proyecto sin contrato asociado");
                                                 }
-                                            }
+                                            }                                           
                                         }
 
                                         // Busqueda Contacto Externo Servicio Especializado
@@ -1368,6 +1462,16 @@ namespace Arkiva.MonitorFiscal.Checklist
                                     // Enviar notificacion (correo)
                                     if (bNotification)
                                     {
+                                        // Agregar estatus "Documentos Pendientes" en el proveedor
+                                        ActualizarEstatusDocumento
+                                        (
+                                            "Proveedor",
+                                            objeto.ObjVer,
+                                            pd_EstatusProveedor,
+                                            3, 0, 0,
+                                            grupo.ObjectType
+                                        );
+
                                         if (contactosExternos.Count > 0)
                                         {
                                             List<string> sEmails = new List<string>();
@@ -1416,6 +1520,19 @@ namespace Arkiva.MonitorFiscal.Checklist
                                             }                                                                                        
                                         }
                                     }
+                                    else
+                                    {
+                                        // Si no se activa la notificacion para el proveedor es porque tiene todos sus documentos al dia
+                                        // Agregar estatus "Proveedor Actualizado" en el proveedor
+                                        ActualizarEstatusDocumento
+                                        (
+                                            "Proveedor",
+                                            objeto.ObjVer,
+                                            pd_EstatusProveedor,
+                                            4, 0, 0,
+                                            grupo.ObjectType
+                                        );
+                                    }
                                 }
                             }
                         }
@@ -1453,6 +1570,8 @@ namespace Arkiva.MonitorFiscal.Checklist
             var pd_Descripcion = oProveedor.Vault.PropertyDefOperations.GetPropertyDefIDByAlias("M-Files.CLM.Property.Description");
             var pd_TipoIncidencia = oProveedor.Vault.PropertyDefOperations.GetPropertyDefIDByAlias("MF.PD.IssueType");
             var pd_Severidad = oProveedor.Vault.PropertyDefOperations.GetPropertyDefIDByAlias("MF.PD.Severity");
+            var wf_IssueProcessing = oProveedor.Vault.WorkflowOperations.GetWorkflowIDByAlias("MF.WF.IssueProcessing");
+            var wfs_Submitted = oProveedor.Vault.WorkflowOperations.GetWorkflowStateIDByAlias("M-Files.CLM.State.IssueProcessing.Submitted");
 
             var oLookupsIssueType = new Lookups();
             var oLookupsProveedor = new Lookups();
@@ -1470,36 +1589,48 @@ namespace Arkiva.MonitorFiscal.Checklist
             oLookupProyecto.Item = oProyecto.ObjVer.ID;
             oLookupsProyecto.Add(-1, oLookupProyecto);
 
-            // Generar el numero consecutivo del siguiente issue a crear
-            var issues = GetExistingIssues(oProveedor);
-            var issuesCount = issues.Count;
-            var noConsecutivo = issuesCount + 1;
-            var sNombreOTitulo = "Issue #" + noConsecutivo;
+            // Antes de crear el issue validar que aun no exista uno ya creado para el proveedor y proyecto
+            var searchBuilderIssue = new MFSearchBuilder(oProveedor.Vault);
+            searchBuilderIssue.Deleted(false); // No eliminados
+            searchBuilderIssue.ObjType(ot_Issue);
+            searchBuilderIssue.Property(pd_Proveedor, MFDataType.MFDatatypeMultiSelectLookup, oLookupsProveedor);
+            searchBuilderIssue.Property(pd_Proyecto, MFDataType.MFDatatypeMultiSelectLookup, oLookupsProyecto);
+            var searchResultsIssue = searchBuilderIssue.FindEx();
 
-            var createBuilder = new MFPropertyValuesBuilder(oProveedor.Vault);
-            createBuilder.SetClass(cl_IssueServiciosEspecializados);
-            createBuilder.Add
-            (
-                (int)MFBuiltInPropertyDef.MFBuiltInPropertyDefNameOrTitle,
-                MFDataType.MFDatatypeText,
-                sNombreOTitulo // Name or title
-            );
-            createBuilder.Add(pd_Proveedor, MFDataType.MFDatatypeMultiSelectLookup, oLookupsProveedor);
-            createBuilder.Add(pd_Proyecto, MFDataType.MFDatatypeMultiSelectLookup, oLookupProyecto);
-            createBuilder.Add(pd_Descripcion, MFDataType.MFDatatypeMultiLineText, "El proyecto no contiene un contrato relacionado");
-            createBuilder.Add(pd_TipoIncidencia, MFDataType.MFDatatypeMultiSelectLookup, oLookupsIssueType);
-            createBuilder.Add(pd_Severidad, MFDataType.MFDatatypeLookup, 2);
+            if (searchResultsIssue.Count == 0)
+            {
+                // Generar el numero consecutivo del siguiente issue a crear
+                var issues = GetExistingIssues(oProveedor);
+                var issuesCount = issues.Count;
+                var noConsecutivo = issuesCount + 1;
+                var sNombreOTitulo = "Issue #" + noConsecutivo;
 
-            // Tipo de objeto a crear
-            var objectTypeId = ot_Issue;
+                var createBuilderIssue = new MFPropertyValuesBuilder(oProveedor.Vault);
+                createBuilderIssue.SetClass(cl_IssueServiciosEspecializados);
+                createBuilderIssue.Add
+                (
+                    (int)MFBuiltInPropertyDef.MFBuiltInPropertyDefNameOrTitle,
+                    MFDataType.MFDatatypeText,
+                    sNombreOTitulo // Name or title
+                );
+                createBuilderIssue.Add(pd_Proveedor, MFDataType.MFDatatypeMultiSelectLookup, oLookupsProveedor);
+                createBuilderIssue.Add(pd_Proyecto, MFDataType.MFDatatypeMultiSelectLookup, oLookupProyecto);
+                createBuilderIssue.Add(pd_Descripcion, MFDataType.MFDatatypeMultiLineText, "El proyecto no contiene un contrato relacionado");
+                createBuilderIssue.Add(pd_TipoIncidencia, MFDataType.MFDatatypeMultiSelectLookup, oLookupsIssueType);
+                createBuilderIssue.Add(pd_Severidad, MFDataType.MFDatatypeLookup, 2);
+                createBuilderIssue.SetWorkflowState(wf_IssueProcessing, wfs_Submitted);
 
-            // Finaliza la creacion del issue
-            var objectVersion = oProveedor.Vault.ObjectOperations.CreateNewObjectEx
-            (
-                objectTypeId,
-                createBuilder.Values,
-                CheckIn: true
-            );
+                // Tipo de objeto a crear
+                var objectTypeId = ot_Issue;
+
+                // Finaliza la creacion del issue
+                var objectVersion = oProveedor.Vault.ObjectOperations.CreateNewObjectEx
+                (
+                    objectTypeId,
+                    createBuilderIssue.Values,
+                    CheckIn: true
+                );
+            }            
         }
 
         private bool BuscaDocumentosChecklistFaltantes(
