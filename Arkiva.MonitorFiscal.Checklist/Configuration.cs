@@ -9,14 +9,7 @@ namespace Arkiva.MonitorFiscal.Checklist
     public class Configuration
     {
         // NOTE: The default value needs to be placed in both the JsonConfEditor
-        // (or derived) attribute, and as a default value on the member.        
-
-        [MFPropertyDef]
-        [JsonConfEditor(
-            Label = "Contacto",
-            HelpText = "Propiedad de Contacto que se define en el objeto padre")]
-        [DataMember]
-        public MFIdentifier ContactoExterno { get; set; }
+        // (or derived) attribute, and as a default value on the member.                
 
         [MFPropertyDef]
         [JsonConfEditor(
@@ -47,52 +40,57 @@ namespace Arkiva.MonitorFiscal.Checklist
     [DataContract]
     public class Grupo
     {
+        [DataMember]
+        [JsonConfEditor(TypeEditor = "options", Options = "{selectOptions:[\"Yes\",\"No\"]}", HelpText = "Habilita o deshabilita la aplicacion", Label = "Enabled", DefaultValue = "No")]
+        public string Enabled { get; set; } = "No";
+
         // Nombre de grupo
         [DataMember]
         [TextEditor(IsRequired = true)]
         public string Name { get; set; }
 
-        [MFObjType]
-        [JsonConfEditor(Label = "Objeto Proveedor")]
         [DataMember]
-        public MFIdentifier ObjectType { get; set; }
+        [JsonConfEditor(
+            Label = "Organizacion",
+            HelpText = "Selecciona el objeto o la clase para determinar la Organizacion sobre el cual se ejecutara el Checklist")]
+        public ValidacionOrganizacion ValidacionOrganizacion { get; set; }        
 
         [MFPropertyDef]
         [JsonConfEditor(
-            Label = "Propiedad Proveedor SE Documental",
+            Label = "Propiedad de la Organizacion",
             HelpText = "Esta propiedad se visualiza en las clases de referencia y documentos que los relaciona al objeto origen")]
         [DataMember]
         public MFIdentifier PropertyDefProveedorSEDocumentos { get; set; }
 
-        [DataMember]
-        [MFPropertyDef(AllowEmpty = true)]
-        [JsonConfEditor(IsRequired = false, DefaultValue = null, Label = "Propiedad Proveedor SE No Documental")]
-        public MFIdentifier PropertyDefProveedorSENoDocumentos { get; set; }
+        //[DataMember]
+        //[MFPropertyDef(AllowEmpty = true)]
+        //[JsonConfEditor(IsRequired = false, DefaultValue = null, Label = "Propiedad Proveedor SE No Documental")]
+        //public MFIdentifier PropertyDefProveedorSENoDocumentos { get; set; }
 
-        [DataMember]
-        [MFObjType(AllowEmpty = true)]
-        [JsonConfEditor(IsRequired = false, DefaultValue = null, Label = "Objeto de tipo documento")]
-        public MFIdentifier Checklist { get; set; }
+        //[DataMember]
+        //[MFObjType(AllowEmpty = true)]
+        //[JsonConfEditor(IsRequired = false, DefaultValue = null, Label = "Objeto de tipo documento")]
+        //public MFIdentifier Checklist { get; set; }
 
-        [DataMember]
-        [MFPropertyDef(AllowEmpty = true)]
-        [JsonConfEditor(IsRequired = false, DefaultValue = null, Label = "Propiedad de tipo documento")]
-        public MFIdentifier PropertyDefChecklist { get; set; }
+        //[DataMember]
+        //[MFPropertyDef(AllowEmpty = true)]
+        //[JsonConfEditor(IsRequired = false, DefaultValue = null, Label = "Propiedad de tipo documento")]
+        //public MFIdentifier PropertyDefChecklist { get; set; }
 
+        //[DataMember]
+        //[MFPropertyDef(AllowEmpty = true)]
+        //[JsonConfEditor(IsRequired = false, DefaultValue = null, Label = "Categoria de tipo documento")]
+        //public MFIdentifier CategoriaTipoDocumento { get; set; }
+
+        [MFPropertyDef]
+        [JsonConfEditor(Label = "Fecha de inicio de la Organizacion")]
         [DataMember]
-        [MFPropertyDef(AllowEmpty = true)]
-        [JsonConfEditor(IsRequired = false, DefaultValue = null, Label = "Categoria de tipo documento")]
-        public MFIdentifier CategoriaTipoDocumento { get; set; }
+        public MFIdentifier FechaInicioProveedor { get; set; }
 
         [MFPropertyDef]
         [JsonConfEditor(Label = "Fecha de documento")]
         [DataMember]
-        public MFIdentifier FechaDeDocumento { get; set; }
-
-        [MFPropertyDef]
-        [JsonConfEditor(Label = "Fecha de inicio (Proveedor)")]
-        [DataMember]
-        public MFIdentifier FechaInicioProveedor { get; set; }
+        public MFIdentifier FechaDeDocumento { get; set; }        
 
         [MFPropertyDef]
         [JsonConfEditor(Label = "Vigencia de documento")]
@@ -100,19 +98,21 @@ namespace Arkiva.MonitorFiscal.Checklist
         public MFIdentifier Vigencia { get; set; }
 
         [MFPropertyDef]
-        [JsonConfEditor(Label = "Propiedad para relacion de documentos mas recientes")]
+        [JsonConfEditor(Label = "Propiedad de documentos vigentes")]
         [DataMember]
         public MFIdentifier MasRecientesDocumentosRelacionados { get; set; }
 
         [MFPropertyDef]
-        [JsonConfEditor(Label = "Propiedad para relacion de historial de documentos")]
+        [JsonConfEditor(
+            Label = "Propiedad de Contacto Administrador",
+            HelpText = "Propiedad de Contacto que se define en el objeto padre")]
         [DataMember]
-        public MFIdentifier HistorialDocumentosRelacionados { get; set; }
+        public MFIdentifier ContactoAdministrador { get; set; }
 
         [MFPropertyDef]
-        [JsonConfEditor(Label = "Propiedad que activa la ley")]
+        [JsonConfEditor(Label = "Propiedad de Empleado / Contacto Externo")]
         [DataMember]
-        public MFIdentifier CheckboxLeyOutsourcing { get; set; }
+        public MFIdentifier EmpleadoContactoExterno { get; set; }
 
         [DataMember]
         [Security(ChangeBy = SecurityAttribute.UserLevel.VaultAdmin)]
@@ -125,11 +125,11 @@ namespace Arkiva.MonitorFiscal.Checklist
         public DateTime? FechaFin { get; set; }
 
         [DataMember]
-        [JsonConfEditor(Label = "Clases de referencia")]
+        [JsonConfEditor(Label = "Documentos de validacion")]
         public List<Clases_Referencia> ClasesReferencia { get; set; }
 
         [DataMember]
-        [JsonConfEditor(Label = "Documentos proveedor")]
+        [JsonConfEditor(Label = "Documentos organizacion")]
         public List<Documentos_Proveedor> DocumentosProveedor { get; set; }
 
         [DataMember]
@@ -139,7 +139,20 @@ namespace Arkiva.MonitorFiscal.Checklist
         [DataMember]
         [JsonConfEditor(Label = "Flujo de trabajo")]
         public ConfigurationWorkflow ConfigurationWorkflow { get; set; }
+    }
 
+    [DataContract]
+    public class ValidacionOrganizacion
+    {
+        [MFObjType]
+        [JsonConfEditor(Label = "Objeto", IsRequired = true)]
+        [DataMember]
+        public MFIdentifier ObjetoOrganizacion { get; set; }
+
+        [MFClass(AllowEmpty = true)]
+        [JsonConfEditor(Label = "Clase", IsRequired = false)]
+        [DataMember]
+        public MFIdentifier ClaseOrganizacion { get; set; }
     }
 
     [DataContract]
@@ -165,7 +178,7 @@ namespace Arkiva.MonitorFiscal.Checklist
         [DataMember]
         [JsonConfEditor(
             Label = "Nombre",
-            HelpText = "Nombre de Documento del Proveedor, requerido para el envio del correo o notificacion")]
+            HelpText = "Nombre de documento de la organizacion, requerido para el envio del correo o notificacion")]
         [TextEditor(IsRequired = true)]
         public string NombreClaseDocumento { get; set; }
 
@@ -228,7 +241,7 @@ namespace Arkiva.MonitorFiscal.Checklist
         public WorkflowChecklist WorkflowChecklist { get; set; }
 
         [DataMember]
-        [JsonConfEditor(Label = "Validaciones Documento Proveedor")]
+        [JsonConfEditor(Label = "Validaciones Documento Organizacion")]
         public WorkflowDocumentoProveedor WorkflowDocumentoProveedor { get; set; }
 
         [DataMember]

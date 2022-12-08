@@ -25,35 +25,29 @@ namespace Arkiva.MonitorFiscal.Checklist
             }
 
             oEmail.Subject = "Checklist Documental";
-            // oEmail.Body = mensaje;
             oEmail.AlternateViews.Add(mensaje);
             oEmail.IsBodyHtml = true;
             oEmail.Priority = MailPriority.Normal;
 
             // Configuracion Smtp
             SmtpClient smtp = new SmtpClient();
-            smtp.Host = "smtp-relay.sendinblue.com"; // smtp.live.com // smtp.gmail.com
+            smtp.Host = "smtp.sendgrid.net"; // smtp.live.com // smtp.gmail.com
             smtp.Port = 587;
-            smtp.EnableSsl = true;
-            smtp.Credentials = new NetworkCredential(remitente, "GZQVvczw5fdO8SX1");
+            smtp.EnableSsl = true;    
             
-            //string output = null;
-
+            smtp.Credentials = new NetworkCredential("apikey", "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");
+            
             try
             {
-                //SysUtils.ReportInfoToEventLog("El correo fue enviado exitosamente");
                 // Enviar Email
                 smtp.Send(oEmail);
                 oEmail.Dispose();
-                //output = "El correo fue enviado exitosamente.";
-                //Console.WriteLine(output);
+
                 bResult = true;
             }
             catch (Exception ex)
             {
-                SysUtils.ReportErrorToEventLog("Error en el envio del correo electronico. " + ex.Message);
-                //output = "Error en el envio del correo electronico. " + ex.Message;
-                //Console.WriteLine(output);
+                SysUtils.ReportErrorToEventLog("Error en el envio del correo electronico. " + ex);
                 oEmail.Dispose();
             }
 

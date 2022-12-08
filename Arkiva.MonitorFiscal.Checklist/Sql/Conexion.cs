@@ -18,7 +18,8 @@ namespace Arkiva.MonitorFiscal.Checklist.Sql
         //    ConnectionString;
 
         //string cadena = @"Data Source=WINDOWS-A28KAVE\SQLEXPRESS;Initial Catalog=Prueba;Persist Security Info=True;User ID=sa;Password=arkivasql";
-        string cadena = @"Data Source=MONITOR\SQLEXPRESS;Initial Catalog=MFSQL_MonitorBackOffice;Persist Security Info=True;User ID=sa;Password=Ark1V@.$Ql";
+        //string cadena = @"Data Source=MONITOR\SQLEXPRESS;Initial Catalog=MFSQL_MonitorBackOffice;Persist Security Info=True;User ID=sa;Password=Ark1V@.$Ql";
+        string cadena = @"Data Source=ARKIVA-HETZ-SQL;Initial Catalog=MFSQL_Monicom-Dev;Persist Security Info=True;User ID=sa;Password=Z4Qfk@DE$2tiuK";
 
         public SqlConnection conectar = new SqlConnection();
 

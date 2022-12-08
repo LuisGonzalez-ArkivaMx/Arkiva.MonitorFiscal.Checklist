@@ -90,9 +90,21 @@ namespace Arkiva.MonitorFiscal.Checklist.Sql
                 string sPeriodoFecha = "";
 
                 if (sPeriodo == "Faltante")
+                {
                     sPeriodoFaltante = sPeriodo;
+                }                    
                 else
-                    sPeriodoFecha = sPeriodo;
+                {
+                    if (sPeriodo == "")
+                    {
+                        string sFechaActual = DateTime.Now.ToString("yyyy-MM-dd");
+                        sPeriodoFecha = sFechaActual;
+                    }
+                    else
+                    {
+                        sPeriodoFecha = sPeriodo;
+                    }                    
+                }                    
 
                 cmd.Parameters.Clear();
                 cmd.Parameters.AddWithValue("@Proveedor", sProveedor);

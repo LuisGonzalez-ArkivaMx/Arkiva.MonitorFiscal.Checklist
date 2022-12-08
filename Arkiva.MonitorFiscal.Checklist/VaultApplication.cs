@@ -58,12 +58,7 @@ namespace Arkiva.MonitorFiscal.Checklist
                     {
                         string sFechaActual = DateTime.Now.ToString("yyyy-MM-dd");
 
-                        if (ComparaFechaBaseContraUnaFechaInicioYFechaFin
-                            (
-                                sFechaActual,
-                                grupo.FechaInicio,
-                                grupo.FechaFin
-                                                    ) == true)
+                        if (grupo.Enabled.Equals("Yes") && ComparaFechaBaseContraUnaFechaInicioYFechaFin(sFechaActual, grupo.FechaInicio, grupo.FechaFin) == true)
                         {
                             // Inicializar objetos, clases y propiedades
                             var ot_ContactoExternoSE = PermanentVault
@@ -86,9 +81,9 @@ namespace Arkiva.MonitorFiscal.Checklist
                                 .PropertyDefOperations
                                 .GetPropertyDefIDByAlias("PD.EstatusContactoExternoSE");
 
-                            var pd_ContactoExternoSE = PermanentVault
-                                .PropertyDefOperations
-                                .GetPropertyDefIDByAlias("PD.ContactoExternoServicioEspecializado.obj");
+                            //var pd_ContactoExternoSE = PermanentVault
+                            //    .PropertyDefOperations
+                            //    .GetPropertyDefIDByAlias("PD.ContactoExternoServicioEspecializado.obj");
 
                             var pd_DocumentosSEContactoExterno = PermanentVault
                                 .PropertyDefOperations
@@ -98,17 +93,24 @@ namespace Arkiva.MonitorFiscal.Checklist
                                 .PropertyDefOperations
                                 .GetPropertyDefIDByAlias("PD.EstatusProveedorLeyOutsourcing");
 
-                            var searchBuilderObject = new MFSearchBuilder(PermanentVault);
-                            searchBuilderObject.Deleted(false);
-                            searchBuilderObject.ObjType(grupo.ObjectType);
+                            var searchBuilderOrganizacion = new MFSearchBuilder(PermanentVault);
+                            searchBuilderOrganizacion.Deleted(false);
 
-                            foreach (var objeto in searchBuilderObject.FindEx())
-                            {                                
+                            // Validar el filtro de busqueda de la Organizacion, si clase es null el filtro es por objeto
+                            if (grupo.ValidacionOrganizacion.ClaseOrganizacion is null)
+                                searchBuilderOrganizacion.ObjType(grupo.ValidacionOrganizacion.ObjetoOrganizacion);
+                            else // Si clase no es null, el filtro de busqueda es por clase
+                                searchBuilderOrganizacion.Class(grupo.ValidacionOrganizacion.ClaseOrganizacion);                            
+
+                            foreach (var organizacion in searchBuilderOrganizacion.FindEx())
+                            {
+                                SysUtils.ReportInfoToEventLog("Organizacion: " + organizacion.Title);
+
                                 bool bActivaProcesoChecklist = false;
                                 List<ObjVer> oListaDocumentosVigentes = new List<ObjVer>();
                                 bool bActivaRelacionDeDocumentosVigentes = false;
                                 List<ObjVer> oListaTodosLosDocumentosLO = new List<ObjVer>();
-                                List<ObjVerEx> contactosExternos = new List<ObjVerEx>();
+                                List<ObjVerEx> contactosAdministradores = new List<ObjVerEx>();
                                 var oPropertyValues = new PropertyValues();
                                 bool bNotification = false;
                                 string sMainBodyMessage = "";
@@ -132,14 +134,14 @@ namespace Arkiva.MonitorFiscal.Checklist
 
                                 oPropertyValues = PermanentVault
                                     .ObjectPropertyOperations
-                                    .GetProperties(objeto.ObjVer);
+                                    .GetProperties(organizacion.ObjVer);
 
-                                if (oPropertyValues.IndexOf(Configuration.ContactoExterno) != -1)
+                                if (oPropertyValues.IndexOf(grupo.ContactoAdministrador) != -1)
                                 {
-                                    if (!oPropertyValues.SearchForPropertyEx(Configuration.ContactoExterno, true).TypedValue.IsNULL())
+                                    if (!oPropertyValues.SearchForPropertyEx(grupo.ContactoAdministrador, true).TypedValue.IsNULL())
                                     {
-                                        contactosExternos = oPropertyValues
-                                            .SearchForPropertyEx(Configuration.ContactoExterno, true)
+                                        contactosAdministradores = oPropertyValues
+                                            .SearchForPropertyEx(grupo.ContactoAdministrador, true)
                                             .TypedValue
                                             .GetValueAsLookups().ToObjVerExs(PermanentVault);
                                     }
@@ -187,7 +189,7 @@ namespace Arkiva.MonitorFiscal.Checklist
                                             (
                                                 grupo.PropertyDefProveedorSEDocumentos,
                                                 MFDataType.MFDatatypeMultiSelectLookup,
-                                                objeto.ObjVer.ID
+                                                organizacion.ObjVer.ID
                                             );
 
                                             var searchResultsDocumentosReferencia = searchBuilderDocumentosReferencia.FindEx();
@@ -232,10 +234,16 @@ namespace Arkiva.MonitorFiscal.Checklist
                                             }
                                         }
                                     }
+                                    else if (tipoValidacionLeyOutsourcing == 3) // Validacion por Empresa Interna
+                                    {
+                                        bActivaProcesoChecklist = true;
+
+                                        SysUtils.ReportInfoToEventLog("Proceso 'Por Empresa Interna' activado: " + bActivaProcesoChecklist);
+                                    }
 
                                     if (bActivaProcesoChecklist == true)
                                     {
-                                        SysUtils.ReportInfoToEventLog("Proveedor: " + objeto.Title);
+                                        SysUtils.ReportInfoToEventLog("Proveedor: " + organizacion.Title);
 
                                         string sChecklistDocumentName = "";
                                         bool bConcatenateDocument = false;
@@ -246,7 +254,7 @@ namespace Arkiva.MonitorFiscal.Checklist
 
                                         // Eliminar del proveedor la informacion de documentos faltantes del recorrido anterior
                                         Sql.Query oQuery = new Sql.Query();
-                                        oQuery.InsertarDocumentosFaltantesChecklist(bDelete, iProveedorID: objeto.ObjVer.ID);
+                                        oQuery.InsertarDocumentosFaltantesChecklist(bDelete, iProveedorID: organizacion.ObjVer.ID, sPeriodo: sFechaActual);
 
                                         // Nuevo recorrido de documentos proveedor
                                         foreach (var claseDocumento in grupo.DocumentosProveedor)
@@ -285,20 +293,20 @@ namespace Arkiva.MonitorFiscal.Checklist
                                             (
                                                 grupo.PropertyDefProveedorSEDocumentos,
                                                 MFDataType.MFDatatypeMultiSelectLookup,
-                                                objeto.ObjVer.ID
+                                                organizacion.ObjVer.ID
                                             );
-                                            //searchBuilderDocumentosProveedor.Property
-                                            //(
-                                            //    MFBuiltInPropertyDef.MFBuiltInPropertyDefWorkflow,
-                                            //    MFDataType.MFDatatypeLookup,
-                                            //    grupo.ConfigurationWorkflow.WorkflowChecklist.WorkflowValidacionesChecklist.ID
-                                            //);
-                                            //searchBuilderDocumentosProveedor.Property
-                                            //(
-                                            //    MFBuiltInPropertyDef.MFBuiltInPropertyDefState,
-                                            //    MFDataType.MFDatatypeLookup,
-                                            //    grupo.ConfigurationWorkflow.WorkflowChecklist.EstadoDocumentoProcesado.ID
-                                            //);
+                                            searchBuilderDocumentosProveedor.Property
+                                            (
+                                                MFBuiltInPropertyDef.MFBuiltInPropertyDefWorkflow,
+                                                MFDataType.MFDatatypeLookup,
+                                                grupo.ConfigurationWorkflow.WorkflowChecklist.WorkflowValidacionesChecklist.ID
+                                            );
+                                            searchBuilderDocumentosProveedor.Property
+                                            (
+                                                MFBuiltInPropertyDef.MFBuiltInPropertyDefState,
+                                                MFDataType.MFDatatypeLookup,
+                                                grupo.ConfigurationWorkflow.WorkflowChecklist.EstadoDocumentoProcesado.ID
+                                            );
 
                                             if (searchBuilderDocumentosProveedor.FindEx().Count > 0) // Se encontro al menos un documento
                                             {                                                
@@ -395,7 +403,7 @@ namespace Arkiva.MonitorFiscal.Checklist
                                                                     szNombreClaseDocumento,
                                                                     documentoProveedor.ID,
                                                                     nombreOTituloObjetoPadre.ToString(),
-                                                                    objeto.ID,
+                                                                    organizacion.ID,
                                                                     oDocumentoRelacionado.ID);
                                                             }
                                                         }
@@ -433,7 +441,7 @@ namespace Arkiva.MonitorFiscal.Checklist
                                                                 oQuery.InsertarDocumentosFaltantesChecklist(
                                                                     bDelete,
                                                                     sProveedor: nombreOTituloObjetoPadre.ToString(),
-                                                                    iProveedorID: objeto.ObjVer.ID,
+                                                                    iProveedorID: organizacion.ObjVer.ID,
                                                                     sCategoria: "Documento Vencido",
                                                                     sTipoDocumento: "Documento Proveedor",
                                                                     sNombreDocumento: szNombreClaseDocumento,
@@ -469,7 +477,7 @@ namespace Arkiva.MonitorFiscal.Checklist
                                                                 // Insert
                                                                 oQuery.InsertarDocumentosCaducados(
                                                                     sProveedor: nombreOTituloObjetoPadre.ToString(),
-                                                                    iProveedorID: objeto.ObjVer.ID,
+                                                                    iProveedorID: organizacion.ObjVer.ID,
                                                                     sCategoria: "Documento Vencido",
                                                                     sTipoDocumento: "Documento Proveedor",
                                                                     sNombreDocumento: szNombreClaseDocumento,
@@ -640,7 +648,7 @@ namespace Arkiva.MonitorFiscal.Checklist
                                                     oQuery.InsertarDocumentosFaltantesChecklist(
                                                         bDelete,
                                                         sProveedor: nombreOTituloObjetoPadre.ToString(),
-                                                        iProveedorID: objeto.ObjVer.ID,
+                                                        iProveedorID: organizacion.ObjVer.ID,
                                                         sCategoria: "Documento Faltante",
                                                         sTipoDocumento: "Documento Proveedor",
                                                         sNombreDocumento: szNombreClaseDocumento,
@@ -659,31 +667,31 @@ namespace Arkiva.MonitorFiscal.Checklist
                                             // Relacion de documentos en la metadata del proveedor
                                             RelacionaDocumentosVigentes(
                                                 grupo.MasRecientesDocumentosRelacionados.ID,
-                                                objeto,
+                                                organizacion,
                                                 oListaDocumentosVigentes);
                                         }
 
-                                        SysUtils.ReportInfoToEventLog("Validacion de proyecto con contrato asociado en el proveedor: " + objeto.Title);
+                                        SysUtils.ReportInfoToEventLog("Validacion de proyecto con contrato asociado en el proveedor: " + organizacion.Title);
                                         
                                         // Validar que proyecto asociado al proveedor tenga asociado un contrato (firmado, vigente), de lo contrario crear issue
-                                        var ot_Proyecto = objeto.Vault.ObjectTypeOperations.GetObjectTypeIDByAlias("MF.OT.Project");
-                                        var cl_Contrato = objeto.Vault.ClassOperations.GetObjectClassIDByAlias("CL.Contrato");
-                                        var cl_ProyectoServicioEspecializado = objeto.Vault.ClassOperations.GetObjectClassIDByAlias("CL.ProyectoServicioEspecializado");
-                                        var pd_Proveedor = objeto.Vault.PropertyDefOperations.GetPropertyDefIDByAlias("MF.PD.Proveedor");
-                                        var pd_ProyectosRelacionados = objeto.Vault.PropertyDefOperations.GetPropertyDefIDByAlias("MF.PD.Project");
-                                        var pd_EstatusProyectoServicioEspecializado = objeto.Vault.PropertyDefOperations.GetPropertyDefIDByAlias("PD.EstatusProyectoServicioEspecializado");                                        
-                                        var pd_TipoContrato = objeto.Vault.PropertyDefOperations.GetPropertyDefIDByAlias("PD.TipoDeContrato");
-                                        var wf_CicloVidaContrato = objeto.Vault.WorkflowOperations.GetWorkflowIDByAlias("MF.WF.ContractLifecycle");
-                                        var wfs_Activo = objeto.Vault.WorkflowOperations.GetWorkflowStateIDByAlias("M-Files.CLM.State.ContractLifecycle.Active");
+                                        var ot_Proyecto = organizacion.Vault.ObjectTypeOperations.GetObjectTypeIDByAlias("MF.OT.Project");
+                                        var cl_Contrato = organizacion.Vault.ClassOperations.GetObjectClassIDByAlias("CL.Contrato");
+                                        var cl_ProyectoServicioEspecializado = organizacion.Vault.ClassOperations.GetObjectClassIDByAlias("CL.ProyectoServicioEspecializado");
+                                        var pd_Proveedor = organizacion.Vault.PropertyDefOperations.GetPropertyDefIDByAlias("MF.PD.Proveedor");
+                                        var pd_ProyectosRelacionados = organizacion.Vault.PropertyDefOperations.GetPropertyDefIDByAlias("MF.PD.Project");
+                                        var pd_EstatusProyectoServicioEspecializado = organizacion.Vault.PropertyDefOperations.GetPropertyDefIDByAlias("PD.EstatusProyectoServicioEspecializado");                                        
+                                        var pd_TipoContrato = organizacion.Vault.PropertyDefOperations.GetPropertyDefIDByAlias("PD.TipoDeContrato");
+                                        var wf_CicloVidaContrato = organizacion.Vault.WorkflowOperations.GetWorkflowIDByAlias("MF.WF.ContractLifecycle");
+                                        var wfs_Activo = organizacion.Vault.WorkflowOperations.GetWorkflowStateIDByAlias("M-Files.CLM.State.ContractLifecycle.Active");
 
                                         var oLookupProveedor = new Lookup();
                                         var oLookupsProveedor = new Lookups();
 
-                                        oLookupProveedor.Item = objeto.ObjVer.ID;
+                                        oLookupProveedor.Item = organizacion.ObjVer.ID;
                                         oLookupsProveedor.Add(-1, oLookupProveedor);
                                         
                                         // Buscar proyectos relacionados al proveedor
-                                        var searchBuilderProyecto = new MFSearchBuilder(objeto.Vault);
+                                        var searchBuilderProyecto = new MFSearchBuilder(organizacion.Vault);
                                         searchBuilderProyecto.Deleted(false);
                                         searchBuilderProyecto.Class(cl_ProyectoServicioEspecializado);
                                         searchBuilderProyecto.Property(pd_Proveedor, MFDataType.MFDatatypeMultiSelectLookup, oLookupsProveedor);
@@ -693,7 +701,7 @@ namespace Arkiva.MonitorFiscal.Checklist
                                         if (searchResultsProyecto.Count > 0)
                                         {
                                             // Buscar contratos relacionados al proyecto
-                                            var searchBuilderContrato = new MFSearchBuilder(objeto.Vault);
+                                            var searchBuilderContrato = new MFSearchBuilder(organizacion.Vault);
                                             searchBuilderContrato.Deleted(false);
                                             searchBuilderContrato.Class(cl_Contrato);
                                             searchBuilderContrato.Property(pd_Proveedor, MFDataType.MFDatatypeMultiSelectLookup, oLookupsProveedor);
@@ -783,7 +791,7 @@ namespace Arkiva.MonitorFiscal.Checklist
                                                     proyecto.Vault.ObjectOperations.CheckIn(checkedOutObjectVersion.ObjVer);
 
                                                     // Crear issue
-                                                    CreateIssue(objeto, proyecto);
+                                                    CreateIssue(organizacion, proyecto);
 
                                                     SysUtils.ReportInfoToEventLog("Proyecto sin contrato asociado");
                                                 }
@@ -799,7 +807,7 @@ namespace Arkiva.MonitorFiscal.Checklist
                                         (
                                             grupo.PropertyDefProveedorSEDocumentos, // Owner (Proveedor SE) - ID: 1730
                                             MFDataType.MFDatatypeLookup,
-                                            objeto.ObjVer.ID
+                                            organizacion.ObjVer.ID
                                         );
                                         sbContactosExternosSE.PropertyNot
                                         (
@@ -851,7 +859,7 @@ namespace Arkiva.MonitorFiscal.Checklist
                                                     );
                                                     searchBuilderDocumentosEmpleado.Property
                                                     (
-                                                        pd_ContactoExternoSE,
+                                                        grupo.EmpleadoContactoExterno,
                                                         MFDataType.MFDatatypeMultiSelectLookup,
                                                         contactoExterno.ObjVer.ID
                                                     );
@@ -859,7 +867,7 @@ namespace Arkiva.MonitorFiscal.Checklist
                                                     (
                                                         grupo.PropertyDefProveedorSEDocumentos,
                                                         MFDataType.MFDatatypeMultiSelectLookup,
-                                                        objeto.ObjVer.ID
+                                                        organizacion.ObjVer.ID
                                                     );
                                                     //searchBuilderDocumentosEmpleado.Property
                                                     //(
@@ -999,7 +1007,7 @@ namespace Arkiva.MonitorFiscal.Checklist
                                                                     oQuery.InsertarDocumentosFaltantesChecklist(
                                                                         bDelete,
                                                                         sProveedor: nombreOTituloObjetoPadre.ToString(),
-                                                                        iProveedorID: objeto.ObjVer.ID,
+                                                                        iProveedorID: organizacion.ObjVer.ID,
                                                                         sEmpleado: contactoExterno.Title,
                                                                         iEmpleadoID: contactoExterno.ObjVer.ID,
                                                                         sCategoria: "Documento Vencido",
@@ -1065,7 +1073,7 @@ namespace Arkiva.MonitorFiscal.Checklist
                                                         oQuery.InsertarDocumentosFaltantesChecklist(
                                                             bDelete,
                                                             sProveedor: nombreOTituloObjetoPadre.ToString(),
-                                                            iProveedorID: objeto.ObjVer.ID,
+                                                            iProveedorID: organizacion.ObjVer.ID,
                                                             sEmpleado: contactoExterno.Title,
                                                             iEmpleadoID: contactoExterno.ObjVer.ID,
                                                             sCategoria: "Documento Faltante",
@@ -1124,7 +1132,7 @@ namespace Arkiva.MonitorFiscal.Checklist
                                                                 sbDocumentosEmpleadosLO.Deleted(false);
                                                                 sbDocumentosEmpleadosLO.Property
                                                                 (
-                                                                    pd_ContactoExternoSE,
+                                                                    grupo.EmpleadoContactoExterno,
                                                                     MFDataType.MFDatatypeMultiSelectLookup,
                                                                     contactoExterno.ObjVer.ID
                                                                 );
@@ -1138,7 +1146,7 @@ namespace Arkiva.MonitorFiscal.Checklist
                                                                 (
                                                                     grupo.PropertyDefProveedorSEDocumentos,
                                                                     MFDataType.MFDatatypeMultiSelectLookup,
-                                                                    objeto.ObjVer.ID
+                                                                    organizacion.ObjVer.ID
                                                                 );
                                                                 //sbDocumentosEmpleadosLO.Property
                                                                 //(
@@ -1267,7 +1275,7 @@ namespace Arkiva.MonitorFiscal.Checklist
                                                                         oQuery.InsertarDocumentosFaltantesChecklist(
                                                                             bDelete,
                                                                             sProveedor: nombreOTituloObjetoPadre.ToString(),
-                                                                            iProveedorID: objeto.ObjVer.ID,
+                                                                            iProveedorID: organizacion.ObjVer.ID,
                                                                             sEmpleado: contactoExterno.Title,
                                                                             iEmpleadoID: contactoExterno.ObjVer.ID,
                                                                             sCategoria: "Documento Vencido",
@@ -1305,7 +1313,7 @@ namespace Arkiva.MonitorFiscal.Checklist
                                                                         // Insert
                                                                         oQuery.InsertarDocumentosCaducados(
                                                                             sProveedor: nombreOTituloObjetoPadre.ToString(),
-                                                                            iProveedorID: objeto.ObjVer.ID,
+                                                                            iProveedorID: organizacion.ObjVer.ID,
                                                                             sEmpleado: contactoExterno.Title,
                                                                             iEmpleadoID: contactoExterno.ObjVer.ID,
                                                                             sCategoria: "Documento Vencido",
@@ -1345,7 +1353,7 @@ namespace Arkiva.MonitorFiscal.Checklist
                                                                     oQuery.InsertarDocumentosFaltantesChecklist(
                                                                         bDelete,
                                                                         sProveedor: nombreOTituloObjetoPadre.ToString(),
-                                                                        iProveedorID: objeto.ObjVer.ID,
+                                                                        iProveedorID: organizacion.ObjVer.ID,
                                                                         sEmpleado: contactoExterno.Title,
                                                                         iEmpleadoID: contactoExterno.ObjVer.ID,
                                                                         sCategoria: "Documento Faltante",
@@ -1466,18 +1474,18 @@ namespace Arkiva.MonitorFiscal.Checklist
                                         ActualizarEstatusDocumento
                                         (
                                             "Proveedor",
-                                            objeto.ObjVer,
+                                            organizacion.ObjVer,
                                             pd_EstatusProveedor,
                                             3, 0, 0,
-                                            grupo.ObjectType
+                                            grupo.ValidacionOrganizacion.ObjetoOrganizacion
                                         );
 
-                                        if (contactosExternos.Count > 0)
+                                        if (contactosAdministradores.Count > 0)
                                         {
                                             List<string> sEmails = new List<string>();
 
                                             // Extraer el email de contactos externos en proveedor
-                                            foreach (var contacto in contactosExternos)
+                                            foreach (var contacto in contactosAdministradores)
                                             {
                                                 oPropertyValues = PermanentVault
                                                     .ObjectPropertyOperations
@@ -1527,10 +1535,10 @@ namespace Arkiva.MonitorFiscal.Checklist
                                         ActualizarEstatusDocumento
                                         (
                                             "Proveedor",
-                                            objeto.ObjVer,
+                                            organizacion.ObjVer,
                                             pd_EstatusProveedor,
                                             4, 0, 0,
-                                            grupo.ObjectType
+                                            grupo.ValidacionOrganizacion.ObjetoOrganizacion
                                         );
                                     }
                                 }
