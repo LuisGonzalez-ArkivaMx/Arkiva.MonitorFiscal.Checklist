@@ -11,12 +11,12 @@ namespace Arkiva.MonitorFiscal.Checklist
 {
     public class Email
     {
-        public bool Enviar(AlternateView mensaje, string remitente, List<string> emails)
+        public bool Enviar(AlternateView mensaje, List<string> emails, string emailService, string hostService, int portService, string usernameService, string passwordService)
         {
             bool bResult = false;
 
             MailMessage oEmail = new MailMessage();
-            string sDe = string.Format("{0} <{1}>", "Administrador M-Files", remitente);
+            string sDe = string.Format("{0} <{1}>", "Administrador M-Files", emailService);
             oEmail.From = new MailAddress(sDe, sDe.Trim().Substring(0, sDe.Trim().IndexOf("<")));
 
             foreach (var email in emails)
@@ -31,11 +31,11 @@ namespace Arkiva.MonitorFiscal.Checklist
 
             // Configuracion Smtp
             SmtpClient smtp = new SmtpClient();
-            smtp.Host = "smtp.sendgrid.net"; // smtp.live.com // smtp.gmail.com
-            smtp.Port = 587;
+            smtp.Host = hostService; // smtp.live.com // smtp.gmail.com
+            smtp.Port = portService;
             smtp.EnableSsl = true;    
             
-            smtp.Credentials = new NetworkCredential("apikey", "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");
+            smtp.Credentials = new NetworkCredential(usernameService, passwordService);
             
             try
             {

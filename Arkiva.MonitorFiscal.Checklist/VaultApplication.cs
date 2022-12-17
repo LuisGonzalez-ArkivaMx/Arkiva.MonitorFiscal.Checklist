@@ -51,14 +51,14 @@ namespace Arkiva.MonitorFiscal.Checklist
             {
                 this.BackgroundOperations.StartRecurringBackgroundOperation(
                     "Recurring Background Operation",
-                    TimeSpan.FromMinutes(Configuration.IntervaloDeEjecucionEnMins),
+                    TimeSpan.FromMinutes(Configuration.ConfigurationServiciosGenerales.IntervaloDeEjecucionEnMins),
                 () =>
                 {
                     foreach (var grupo in Configuration.Grupos)
                     {
                         string sFechaActual = DateTime.Now.ToString("yyyy-MM-dd");
 
-                        if (grupo.Enabled.Equals("Yes") && ComparaFechaBaseContraUnaFechaInicioYFechaFin(sFechaActual, grupo.FechaInicio, grupo.FechaFin) == true)
+                        if (grupo.GrupoEnabled.Equals("Yes") && ComparaFechaBaseContraUnaFechaInicioYFechaFin(sFechaActual, grupo.FechaInicio, grupo.FechaFin) == true)
                         {
                             // Inicializar objetos, clases y propiedades
                             var ot_ContactoExternoSE = PermanentVault
@@ -150,6 +150,9 @@ namespace Arkiva.MonitorFiscal.Checklist
                                 if (oPropertyValues.IndexOf(pd_TipoDeValidacionLeyDeOutsourcing) != -1 && //grupo.CheckboxLeyOutsourcing
                                     !oPropertyValues.SearchForPropertyEx(pd_TipoDeValidacionLeyDeOutsourcing, true).TypedValue.IsNULL()) //grupo.CheckboxLeyOutsourcing
                                 {
+                                    bool bValidaDocumentoPorProyecto = false;
+                                    List<ObjVerEx> searchResultsProyectoPorProveedor = new List<ObjVerEx>();
+
                                     var tipoValidacionLeyOutsourcing = oPropertyValues
                                         .SearchForPropertyEx(pd_TipoDeValidacionLeyDeOutsourcing, true)
                                         .TypedValue
@@ -218,11 +221,32 @@ namespace Arkiva.MonitorFiscal.Checklist
                                                             break;
                                                         }
                                                     }
-                                                    else if ( documento.Class == 236) // Proyecto
+                                                    else if (documento.Class == 236) // Proyecto
                                                     {
                                                         if (iEstatus == 1)
                                                         {
+                                                            var oLookupProyectoPorProveedor = new Lookup();
+                                                            var oLookupsProyectoPorProveedor = new Lookups();
+
+                                                            oLookupProyectoPorProveedor.Item = organizacion.ObjVer.ID;
+                                                            oLookupsProyectoPorProveedor.Add(-1, oLookupProyectoPorProveedor);
+
+                                                            // Buscar todos los proyectos del proveedor
+                                                            var searchBuilderProyectoPorProveedor = new MFSearchBuilder(organizacion.Vault);
+                                                            searchBuilderProyectoPorProveedor.Deleted(false);
+                                                            searchBuilderProyectoPorProveedor.Class(documento.Class);
+                                                            searchBuilderProyectoPorProveedor.Property
+                                                            (
+                                                                grupo.PropertyDefProveedorSEDocumentos, 
+                                                                MFDataType.MFDatatypeMultiSelectLookup, 
+                                                                oLookupsProyectoPorProveedor
+                                                            );
+
+                                                            searchResultsProyectoPorProveedor = searchBuilderProyectoPorProveedor.FindEx();
+
                                                             bActivaProcesoChecklist = true;
+                                                            bValidaDocumentoPorProyecto = true;
+
                                                             break;
                                                         }
                                                     }
@@ -256,7 +280,7 @@ namespace Arkiva.MonitorFiscal.Checklist
                                         Sql.Query oQuery = new Sql.Query();
                                         oQuery.InsertarDocumentosFaltantesChecklist(bDelete, iProveedorID: organizacion.ObjVer.ID, sPeriodo: sFechaActual);
 
-                                        // Nuevo recorrido de documentos proveedor
+                                        // Recorrido de documentos proveedor
                                         foreach (var claseDocumento in grupo.DocumentosProveedor)
                                         {
                                             bDelete = false;
@@ -325,6 +349,8 @@ namespace Arkiva.MonitorFiscal.Checklist
                                                     {
                                                         foreach (var documentoProveedor in searchBuilderDocumentosProveedor.FindEx())
                                                         {
+                                                            SysUtils.ReportInfoToEventLog("Documento: " + documentoProveedor.Title + ", ID: " + documentoProveedor.ObjVer.ID);
+
                                                             oPropertyValues = PermanentVault
                                                                 .ObjectPropertyOperations
                                                                 .GetProperties(documentoProveedor.ObjVer);
@@ -473,17 +499,70 @@ namespace Arkiva.MonitorFiscal.Checklist
 
                                                             if (claseDocumento.TipoDocumentoChecklist == "Documento checklist")
                                                             {
+                                                                SysUtils.ReportInfoToEventLog("Insertando documento: " + documento.ID + " en la tabla DocumentosCaducados");
 
-                                                                // Insert
-                                                                oQuery.InsertarDocumentosCaducados(
-                                                                    sProveedor: nombreOTituloObjetoPadre.ToString(),
-                                                                    iProveedorID: organizacion.ObjVer.ID,
-                                                                    sCategoria: "Documento Vencido",
-                                                                    sTipoDocumento: "Documento Proveedor",
-                                                                    sNombreDocumento: szNombreClaseDocumento,
-                                                                    iDocumentoID: documento.ID,
-                                                                    sVigencia: claseDocumento.VigenciaDocumentoProveedor,
-                                                                    sPeriodo: sPeriodoDocumentoProveedor);
+                                                                if (bValidaDocumentoPorProyecto == true)
+                                                                {
+                                                                    foreach (var proyecto in searchResultsProyectoPorProveedor)
+                                                                    {
+                                                                        var pd_DocumentosRelacionadosAlProyecto = proyecto.Vault.PropertyDefOperations.GetPropertyDefIDByAlias("PD.Document");
+                                                                        var oPropertiesProyecto = proyecto.Properties;
+
+                                                                        var oListDocumentosProyecto = oPropertiesProyecto
+                                                                            .SearchForPropertyEx(pd_DocumentosRelacionadosAlProyecto, true)
+                                                                            .TypedValue
+                                                                            .GetValueAsLookups()
+                                                                            .ToObjVerExs(proyecto.Vault);
+
+                                                                        foreach (var documentoProyecto in oListDocumentosProyecto)
+                                                                        {
+                                                                            if (documento.ID == documentoProyecto.ObjVer.ID)
+                                                                            {
+                                                                                // Insert la tabla de documentos caducados
+                                                                                oQuery.InsertarDocumentosCaducados(
+                                                                                    sProveedor: nombreOTituloObjetoPadre.ToString(),
+                                                                                    iProveedorID: organizacion.ObjVer.ID,
+                                                                                    sProyecto: proyecto.Title,
+                                                                                    iProyectoID: proyecto.ID,
+                                                                                    sCategoria: "Documento Vencido",
+                                                                                    sTipoDocumento: "Documento Proveedor",
+                                                                                    sNombreDocumento: szNombreClaseDocumento,
+                                                                                    iDocumentoID: documento.ID,
+                                                                                    sVigencia: claseDocumento.VigenciaDocumentoProveedor,
+                                                                                    sPeriodo: sPeriodoDocumentoProveedor);
+                                                                            }
+                                                                            else
+                                                                            {
+                                                                                // Enviar a la tabla de documentos faltantes
+                                                                                oQuery.InsertarDocumentosFaltantesChecklist(
+                                                                                    bDelete,
+                                                                                    sProveedor: nombreOTituloObjetoPadre.ToString(),
+                                                                                    iProveedorID: organizacion.ObjVer.ID,
+                                                                                    sProyecto: proyecto.Title,
+                                                                                    iProyectoID: proyecto.ID,
+                                                                                    sCategoria: "Documento Faltante",
+                                                                                    sTipoDocumento: "Documento Proveedor",
+                                                                                    sNombreDocumento: szNombreClaseDocumento,
+                                                                                    iDocumentoID: 0,
+                                                                                    sVigencia: claseDocumento.VigenciaDocumentoProveedor,
+                                                                                    sPeriodo: sPeriodoDocumentoProveedor);
+                                                                            }
+                                                                        }                                                                        
+                                                                    }
+                                                                }
+                                                                else
+                                                                {
+                                                                    // Insert
+                                                                    oQuery.InsertarDocumentosCaducados(
+                                                                        sProveedor: nombreOTituloObjetoPadre.ToString(),
+                                                                        iProveedorID: organizacion.ObjVer.ID,
+                                                                        sCategoria: "Documento Vencido",
+                                                                        sTipoDocumento: "Documento Proveedor",
+                                                                        sNombreDocumento: szNombreClaseDocumento,
+                                                                        iDocumentoID: documento.ID,
+                                                                        sVigencia: claseDocumento.VigenciaDocumentoProveedor,
+                                                                        sPeriodo: sPeriodoDocumentoProveedor);
+                                                                }                                                                
                                                             }
                                                         }
 
@@ -644,17 +723,39 @@ namespace Arkiva.MonitorFiscal.Checklist
 
                                                 if (claseDocumento.TipoDocumentoChecklist == "Documento checklist")
                                                 {
-                                                    // Enviar la informacion del documento faltante a la BD
-                                                    oQuery.InsertarDocumentosFaltantesChecklist(
-                                                        bDelete,
-                                                        sProveedor: nombreOTituloObjetoPadre.ToString(),
-                                                        iProveedorID: organizacion.ObjVer.ID,
-                                                        sCategoria: "Documento Faltante",
-                                                        sTipoDocumento: "Documento Proveedor",
-                                                        sNombreDocumento: szNombreClaseDocumento,
-                                                        iDocumentoID: 0,
-                                                        sVigencia: claseDocumento.VigenciaDocumentoProveedor,
-                                                        sPeriodo: sPeriodoDocumentoProveedor);
+                                                    if (bValidaDocumentoPorProyecto == true)
+                                                    {                                                        
+                                                        foreach (var proyecto in searchResultsProyectoPorProveedor)
+                                                        {
+                                                            // Enviar la informacion del documento faltante a la BD
+                                                            oQuery.InsertarDocumentosFaltantesChecklist(
+                                                                bDelete,
+                                                                sProveedor: nombreOTituloObjetoPadre.ToString(),
+                                                                iProveedorID: organizacion.ObjVer.ID,
+                                                                sProyecto: proyecto.Title,
+                                                                iProyectoID: proyecto.ID,
+                                                                sCategoria: "Documento Faltante",
+                                                                sTipoDocumento: "Documento Proveedor",
+                                                                sNombreDocumento: szNombreClaseDocumento,
+                                                                iDocumentoID: 0,
+                                                                sVigencia: claseDocumento.VigenciaDocumentoProveedor,
+                                                                sPeriodo: sPeriodoDocumentoProveedor);
+                                                        }
+                                                    }
+                                                    else
+                                                    {
+                                                        // Enviar la informacion del documento faltante a la BD
+                                                        oQuery.InsertarDocumentosFaltantesChecklist(
+                                                            bDelete,
+                                                            sProveedor: nombreOTituloObjetoPadre.ToString(),
+                                                            iProveedorID: organizacion.ObjVer.ID,
+                                                            sCategoria: "Documento Faltante",
+                                                            sTipoDocumento: "Documento Proveedor",
+                                                            sNombreDocumento: szNombreClaseDocumento,
+                                                            iDocumentoID: 0,
+                                                            sVigencia: claseDocumento.VigenciaDocumentoProveedor,
+                                                            sPeriodo: sPeriodoDocumentoProveedor);
+                                                    }                                                    
                                                 }                                                
 
                                                 bNotification = true;
@@ -806,8 +907,8 @@ namespace Arkiva.MonitorFiscal.Checklist
                                         sbContactosExternosSE.Property
                                         (
                                             grupo.PropertyDefProveedorSEDocumentos, // Owner (Proveedor SE) - ID: 1730
-                                            MFDataType.MFDatatypeLookup,
-                                            organizacion.ObjVer.ID
+                                            MFDataType.MFDatatypeMultiSelectLookup,
+                                            oLookupsProveedor // organizacion.ObjVer.ID
                                         );
                                         sbContactosExternosSE.PropertyNot
                                         (
@@ -869,18 +970,18 @@ namespace Arkiva.MonitorFiscal.Checklist
                                                         MFDataType.MFDatatypeMultiSelectLookup,
                                                         organizacion.ObjVer.ID
                                                     );
-                                                    //searchBuilderDocumentosEmpleado.Property
-                                                    //(
-                                                    //    MFBuiltInPropertyDef.MFBuiltInPropertyDefWorkflow,
-                                                    //    MFDataType.MFDatatypeLookup,
-                                                    //    grupo.ConfigurationWorkflow.WorkflowChecklist.WorkflowValidacionesChecklist.ID
-                                                    //);
-                                                    //searchBuilderDocumentosEmpleado.Property
-                                                    //(
-                                                    //    MFBuiltInPropertyDef.MFBuiltInPropertyDefState,
-                                                    //    MFDataType.MFDatatypeLookup,
-                                                    //    grupo.ConfigurationWorkflow.WorkflowChecklist.EstadoDocumentoProcesado.ID
-                                                    //);
+                                                    searchBuilderDocumentosEmpleado.Property
+                                                    (
+                                                        MFBuiltInPropertyDef.MFBuiltInPropertyDefWorkflow,
+                                                        MFDataType.MFDatatypeLookup,
+                                                        grupo.ConfigurationWorkflow.WorkflowChecklist.WorkflowValidacionesChecklist.ID
+                                                    );
+                                                    searchBuilderDocumentosEmpleado.Property
+                                                    (
+                                                        MFBuiltInPropertyDef.MFBuiltInPropertyDefState,
+                                                        MFDataType.MFDatatypeLookup,
+                                                        grupo.ConfigurationWorkflow.WorkflowChecklist.EstadoDocumentoProcesado.ID
+                                                    );
 
                                                     if (searchBuilderDocumentosEmpleado.FindEx().Count > 0) // Se encontro al menos un documento
                                                     {
@@ -1069,18 +1170,41 @@ namespace Arkiva.MonitorFiscal.Checklist
                                                         sDocumentosEnviadosAEmpleado += ListaItemsEnviadosAEmpleado.Replace("[DocumentoEmpleado]", szNombreClaseDocumento);
                                                         sPeriodosDeDocumentosEnviadosAEmpleado += "Faltante" + "<br/>";
 
-                                                        // Insertar informacion de documento vencido
-                                                        oQuery.InsertarDocumentosFaltantesChecklist(
-                                                            bDelete,
-                                                            sProveedor: nombreOTituloObjetoPadre.ToString(),
-                                                            iProveedorID: organizacion.ObjVer.ID,
-                                                            sEmpleado: contactoExterno.Title,
-                                                            iEmpleadoID: contactoExterno.ObjVer.ID,
-                                                            sCategoria: "Documento Faltante",
-                                                            sTipoDocumento: "Documento Empleado",
-                                                            sNombreDocumento: szNombreClaseDocumento,
-                                                            iDocumentoID: 0,
-                                                            sPeriodo: "Faltante");
+                                                        if (bValidaDocumentoPorProyecto == true)
+                                                        {
+                                                            foreach (var proyecto in searchResultsProyectoPorProveedor)
+                                                            {
+                                                                // Enviar la informacion del documento faltante a la BD
+                                                                oQuery.InsertarDocumentosFaltantesChecklist(
+                                                                    bDelete,
+                                                                    sProveedor: nombreOTituloObjetoPadre.ToString(),
+                                                                    iProveedorID: organizacion.ObjVer.ID,
+                                                                    sProyecto: proyecto.Title,
+                                                                    iProyectoID: proyecto.ID,
+                                                                    sEmpleado: contactoExterno.Title,
+                                                                    iEmpleadoID: contactoExterno.ObjVer.ID,
+                                                                    sCategoria: "Documento Faltante",
+                                                                    sTipoDocumento: "Documento Empleado",
+                                                                    sNombreDocumento: szNombreClaseDocumento,
+                                                                    iDocumentoID: 0,
+                                                                    sPeriodo: "Faltante");
+                                                            }
+                                                        }
+                                                        else
+                                                        {
+                                                            // Insertar informacion de documento vencido
+                                                            oQuery.InsertarDocumentosFaltantesChecklist(
+                                                                bDelete,
+                                                                sProveedor: nombreOTituloObjetoPadre.ToString(),
+                                                                iProveedorID: organizacion.ObjVer.ID,
+                                                                sEmpleado: contactoExterno.Title,
+                                                                iEmpleadoID: contactoExterno.ObjVer.ID,
+                                                                sCategoria: "Documento Faltante",
+                                                                sTipoDocumento: "Documento Empleado",
+                                                                sNombreDocumento: szNombreClaseDocumento,
+                                                                iDocumentoID: 0,
+                                                                sPeriodo: "Faltante");
+                                                        }
 
                                                         // Concatenar los documentos al contacto externo correspondiente
                                                         bActivaConcatenarContactoExterno = true;
@@ -1148,18 +1272,18 @@ namespace Arkiva.MonitorFiscal.Checklist
                                                                     MFDataType.MFDatatypeMultiSelectLookup,
                                                                     organizacion.ObjVer.ID
                                                                 );
-                                                                //sbDocumentosEmpleadosLO.Property
-                                                                //(
-                                                                //    MFBuiltInPropertyDef.MFBuiltInPropertyDefWorkflow,
-                                                                //    MFDataType.MFDatatypeLookup,
-                                                                //    grupo.ConfigurationWorkflow.WorkflowChecklist.WorkflowValidacionesChecklist.ID
-                                                                //);
-                                                                //sbDocumentosEmpleadosLO.Property
-                                                                //(
-                                                                //    MFBuiltInPropertyDef.MFBuiltInPropertyDefState,
-                                                                //    MFDataType.MFDatatypeLookup,
-                                                                //    grupo.ConfigurationWorkflow.WorkflowChecklist.EstadoDocumentoProcesado.ID
-                                                                //);
+                                                                sbDocumentosEmpleadosLO.Property
+                                                                (
+                                                                    MFBuiltInPropertyDef.MFBuiltInPropertyDefWorkflow,
+                                                                    MFDataType.MFDatatypeLookup,
+                                                                    grupo.ConfigurationWorkflow.WorkflowChecklist.WorkflowValidacionesChecklist.ID
+                                                                );
+                                                                sbDocumentosEmpleadosLO.Property
+                                                                (
+                                                                    MFBuiltInPropertyDef.MFBuiltInPropertyDefState,
+                                                                    MFDataType.MFDatatypeLookup,
+                                                                    grupo.ConfigurationWorkflow.WorkflowChecklist.EstadoDocumentoProcesado.ID
+                                                                );
 
                                                                 var documentosCount = sbDocumentosEmpleadosLO.FindEx().Count;
                                                                 SysUtils.ReportInfoToEventLog("Documentos: " + documentosCount);
@@ -1310,18 +1434,75 @@ namespace Arkiva.MonitorFiscal.Checklist
                                                                             sPeriodoDocumentoEmpleado = dtFechaInicioPeriodo.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture);
                                                                         }
 
-                                                                        // Insert
-                                                                        oQuery.InsertarDocumentosCaducados(
-                                                                            sProveedor: nombreOTituloObjetoPadre.ToString(),
-                                                                            iProveedorID: organizacion.ObjVer.ID,
-                                                                            sEmpleado: contactoExterno.Title,
-                                                                            iEmpleadoID: contactoExterno.ObjVer.ID,
-                                                                            sCategoria: "Documento Vencido",
-                                                                            sTipoDocumento: "Documento Empleado",
-                                                                            sNombreDocumento: claseEmpleadoLO.NombreClaseDocumento,
-                                                                            iDocumentoID: documento.ID,
-                                                                            sVigencia: frecuenciaPagoNomina,
-                                                                            sPeriodo: sPeriodoDocumentoEmpleado);
+                                                                        SysUtils.ReportInfoToEventLog("Insertando documento: " + documento.ID + " en la tabla DocumentosCaducados");
+
+                                                                        if (bValidaDocumentoPorProyecto == true)
+                                                                        {
+                                                                            foreach (var proyecto in searchResultsProyectoPorProveedor)
+                                                                            {
+                                                                                var pd_DocumentosRelacionadosAlProyecto = proyecto.Vault.PropertyDefOperations.GetPropertyDefIDByAlias("PD.Document");
+                                                                                var oPropertiesProyecto = proyecto.Properties;
+
+                                                                                var oListDocumentosProyecto = oPropertiesProyecto
+                                                                                    .SearchForPropertyEx(pd_DocumentosRelacionadosAlProyecto, true)
+                                                                                    .TypedValue
+                                                                                    .GetValueAsLookups()
+                                                                                    .ToObjVerExs(proyecto.Vault);
+
+                                                                                foreach (var documentoProyecto in oListDocumentosProyecto)
+                                                                                {
+                                                                                    if (documento.ID == documentoProyecto.ObjVer.ID)
+                                                                                    {
+                                                                                        // Insert
+                                                                                        oQuery.InsertarDocumentosCaducados(
+                                                                                            sProveedor: nombreOTituloObjetoPadre.ToString(),
+                                                                                            iProveedorID: organizacion.ObjVer.ID,
+                                                                                            sProyecto: proyecto.Title,
+                                                                                            iProyectoID: proyecto.ID,
+                                                                                            sEmpleado: contactoExterno.Title,
+                                                                                            iEmpleadoID: contactoExterno.ObjVer.ID,
+                                                                                            sCategoria: "Documento Vencido",
+                                                                                            sTipoDocumento: "Documento Empleado",
+                                                                                            sNombreDocumento: claseEmpleadoLO.NombreClaseDocumento,
+                                                                                            iDocumentoID: documento.ID,
+                                                                                            sVigencia: frecuenciaPagoNomina,
+                                                                                            sPeriodo: sPeriodoDocumentoEmpleado);
+                                                                                    }
+                                                                                    else
+                                                                                    {
+                                                                                        // Insert
+                                                                                        oQuery.InsertarDocumentosCaducados(
+                                                                                            sProveedor: nombreOTituloObjetoPadre.ToString(),
+                                                                                            iProveedorID: organizacion.ObjVer.ID,
+                                                                                            sProyecto: proyecto.Title,
+                                                                                            iProyectoID: proyecto.ID,
+                                                                                            sEmpleado: contactoExterno.Title,
+                                                                                            iEmpleadoID: contactoExterno.ObjVer.ID,
+                                                                                            sCategoria: "Documento Faltante",
+                                                                                            sTipoDocumento: "Documento Empleado",
+                                                                                            sNombreDocumento: claseEmpleadoLO.NombreClaseDocumento,
+                                                                                            iDocumentoID: 0,
+                                                                                            sVigencia: frecuenciaPagoNomina,
+                                                                                            sPeriodo: sPeriodoDocumentoEmpleado);
+                                                                                    }
+                                                                                }
+                                                                            }
+                                                                        }
+                                                                        else
+                                                                        {
+                                                                            // Insert
+                                                                            oQuery.InsertarDocumentosCaducados(
+                                                                                sProveedor: nombreOTituloObjetoPadre.ToString(),
+                                                                                iProveedorID: organizacion.ObjVer.ID,
+                                                                                sEmpleado: contactoExterno.Title,
+                                                                                iEmpleadoID: contactoExterno.ObjVer.ID,
+                                                                                sCategoria: "Documento Vencido",
+                                                                                sTipoDocumento: "Documento Empleado",
+                                                                                sNombreDocumento: claseEmpleadoLO.NombreClaseDocumento,
+                                                                                iDocumentoID: documento.ID,
+                                                                                sVigencia: frecuenciaPagoNomina,
+                                                                                sPeriodo: sPeriodoDocumentoEmpleado);
+                                                                        }
                                                                     }
                                                                 }
                                                                 else
@@ -1349,19 +1530,43 @@ namespace Arkiva.MonitorFiscal.Checklist
                                                                         sPeriodoDocumentoEmpleado = dtFechaInicioPeriodo.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture);
                                                                     }
 
-                                                                    // Enviar la informacion del documento faltante a la BD
-                                                                    oQuery.InsertarDocumentosFaltantesChecklist(
-                                                                        bDelete,
-                                                                        sProveedor: nombreOTituloObjetoPadre.ToString(),
-                                                                        iProveedorID: organizacion.ObjVer.ID,
-                                                                        sEmpleado: contactoExterno.Title,
-                                                                        iEmpleadoID: contactoExterno.ObjVer.ID,
-                                                                        sCategoria: "Documento Faltante",
-                                                                        sTipoDocumento: "Documento Empleado",
-                                                                        sNombreDocumento: claseEmpleadoLO.NombreClaseDocumento,
-                                                                        iDocumentoID: 0,
-                                                                        sVigencia: frecuenciaPagoNomina,
-                                                                        sPeriodo: sPeriodoDocumentoEmpleado);
+                                                                    if (bValidaDocumentoPorProyecto == true)
+                                                                    {
+                                                                        foreach (var proyecto in searchResultsProyectoPorProveedor)
+                                                                        {
+                                                                            // Enviar la informacion del documento faltante a la BD
+                                                                            oQuery.InsertarDocumentosFaltantesChecklist(
+                                                                                bDelete,
+                                                                                sProveedor: nombreOTituloObjetoPadre.ToString(),
+                                                                                iProveedorID: organizacion.ObjVer.ID,
+                                                                                sProyecto: proyecto.Title,
+                                                                                iProyectoID: proyecto.ID,
+                                                                                sEmpleado: contactoExterno.Title,
+                                                                                iEmpleadoID: contactoExterno.ObjVer.ID,
+                                                                                sCategoria: "Documento Faltante",
+                                                                                sTipoDocumento: "Documento Empleado",
+                                                                                sNombreDocumento: claseEmpleadoLO.NombreClaseDocumento,
+                                                                                iDocumentoID: 0,
+                                                                                sVigencia: frecuenciaPagoNomina,
+                                                                                sPeriodo: sPeriodoDocumentoEmpleado);
+                                                                        }
+                                                                    }
+                                                                    else
+                                                                    {
+                                                                        // Enviar la informacion del documento faltante a la BD
+                                                                        oQuery.InsertarDocumentosFaltantesChecklist(
+                                                                            bDelete,
+                                                                            sProveedor: nombreOTituloObjetoPadre.ToString(),
+                                                                            iProveedorID: organizacion.ObjVer.ID,
+                                                                            sEmpleado: contactoExterno.Title,
+                                                                            iEmpleadoID: contactoExterno.ObjVer.ID,
+                                                                            sCategoria: "Documento Faltante",
+                                                                            sTipoDocumento: "Documento Empleado",
+                                                                            sNombreDocumento: claseEmpleadoLO.NombreClaseDocumento,
+                                                                            iDocumentoID: 0,
+                                                                            sVigencia: frecuenciaPagoNomina,
+                                                                            sPeriodo: sPeriodoDocumentoEmpleado);
+                                                                    }
 
                                                                     // Modificar el estatus del Contacto Externo
                                                                     ActualizarEstatusDocumento
@@ -1492,7 +1697,7 @@ namespace Arkiva.MonitorFiscal.Checklist
                                                     .GetProperties(contacto.ObjVer);
 
                                                 var emailContactoExterno = oPropertyValues
-                                                    .SearchForProperty(Configuration.CorreoElectronico)
+                                                    .SearchForProperty(Configuration.ConfigurationServiciosGenerales.ConfigurationNotificaciones.PDEmail)
                                                     .TypedValue
                                                     .Value;
 
@@ -1522,10 +1727,15 @@ namespace Arkiva.MonitorFiscal.Checklist
 
                                             Email oEmail = new Email();
 
-                                            if (oEmail.Enviar(AV, Configuration.RemitenteEmail, sEmails) == true)
+                                            if (oEmail.Enviar(AV, sEmails,
+                                                Configuration.ConfigurationServiciosGenerales.ConfigurationNotificaciones.EmailService, 
+                                                Configuration.ConfigurationServiciosGenerales.ConfigurationNotificaciones.HostService,
+                                                Configuration.ConfigurationServiciosGenerales.ConfigurationNotificaciones.PortService,
+                                                Configuration.ConfigurationServiciosGenerales.ConfigurationNotificaciones.UsernameService,
+                                                Configuration.ConfigurationServiciosGenerales.ConfigurationNotificaciones.PasswordService) == true)
                                             {
                                                 SysUtils.ReportInfoToEventLog("Fin del proceso, el correo ha sido enviado exitosamente.");
-                                            }                                                                                        
+                                            }                                                                                
                                         }
                                     }
                                     else

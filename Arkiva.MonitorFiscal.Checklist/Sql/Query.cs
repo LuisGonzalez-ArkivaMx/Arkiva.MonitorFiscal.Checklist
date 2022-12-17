@@ -17,6 +17,8 @@ namespace Arkiva.MonitorFiscal.Checklist.Sql
             bool bDelete,
             string sProveedor = "", 
             int iProveedorID = 0, 
+            string sProyecto = "",
+            int iProyectoID = 0,
             string sEmpleado = "", 
             int iEmpleadoID = 0, 
             string sCategoria = "", 
@@ -43,6 +45,8 @@ namespace Arkiva.MonitorFiscal.Checklist.Sql
                 cmd.Parameters.AddWithValue("@bDelete", bDelete);
                 cmd.Parameters.AddWithValue("@Proveedor", sProveedor);
                 cmd.Parameters.AddWithValue("@Proveedor_ID", iProveedorID);
+                cmd.Parameters.AddWithValue("@Proyecto", sProyecto);
+                cmd.Parameters.AddWithValue("@Proyecto_ID", iProyectoID);
                 cmd.Parameters.AddWithValue("@Empleado", sEmpleado);
                 cmd.Parameters.AddWithValue("@Empleado_ID", iEmpleadoID);
                 cmd.Parameters.AddWithValue("@Categoria", sCategoria);
@@ -72,6 +76,8 @@ namespace Arkiva.MonitorFiscal.Checklist.Sql
         public void InsertarDocumentosCaducados(
             string sProveedor = "",
             int iProveedorID = 0,
+            string sProyecto = "",
+            int iProyectoID = 0,
             string sEmpleado = "",
             int iEmpleadoID = 0,
             string sCategoria = "",
@@ -109,6 +115,8 @@ namespace Arkiva.MonitorFiscal.Checklist.Sql
                 cmd.Parameters.Clear();
                 cmd.Parameters.AddWithValue("@Proveedor", sProveedor);
                 cmd.Parameters.AddWithValue("@Proveedor_ID", iProveedorID);
+                cmd.Parameters.AddWithValue("@Proyecto", sProyecto);
+                cmd.Parameters.AddWithValue("@Proyecto_ID", iProyectoID);
                 cmd.Parameters.AddWithValue("@Empleado", sEmpleado);
                 cmd.Parameters.AddWithValue("@Empleado_ID", iEmpleadoID);
                 cmd.Parameters.AddWithValue("@Categoria", sCategoria);

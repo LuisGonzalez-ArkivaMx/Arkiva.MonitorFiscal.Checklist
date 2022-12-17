@@ -9,40 +9,73 @@ namespace Arkiva.MonitorFiscal.Checklist
     public class Configuration
     {
         // NOTE: The default value needs to be placed in both the JsonConfEditor
-        // (or derived) attribute, and as a default value on the member.                
-
-        [MFPropertyDef]
-        [JsonConfEditor(
-            Label = "E-mail",
-            HelpText = "Propiedad de E-mail que se define en el objeto contacto externo/interno")]
+        // (or derived) attribute, and as a default value on the member.                        
         [DataMember]
-        public MFIdentifier CorreoElectronico { get; set; }
-
-        [DataMember]
-        [JsonConfEditor(
-            Label = "E-mail de remitente",
-            HelpText = "Agregar el correo desde la cual se enviaran las notificaciones/e-mails")]
+        [JsonConfEditor(Label = "Servicios generales")]
         [Security(ChangeBy = SecurityAttribute.UserLevel.VaultAdmin)]
-        public string RemitenteEmail { get; set; }
-
-        [DataMember]
-        [JsonConfEditor(
-            Label = "Tiempo de espera (en mins)",
-            HelpText = "Definir el tiempo de espera (establecido en minutos) entre las ejecuciones de la aplicacion")]
-        [Security(ChangeBy = SecurityAttribute.UserLevel.VaultAdmin)]
-        [JsonConfIntegerEditor]
-        public int IntervaloDeEjecucionEnMins { get; set; }
+        public ConfigurationServiciosGenerales ConfigurationServiciosGenerales { get; set; }
 
         [DataMember]
         public List<Grupo> Grupos { get; set; }
     }
 
     [DataContract]
+    public class ConfigurationServiciosGenerales
+    {
+        [DataMember]
+        [JsonConfEditor(TypeEditor = "options", Options = "{selectOptions:[\"Yes\",\"No\"]}", HelpText = "Habilita o deshabilita la aplicacion", Label = "Aplicacion habilitada", DefaultValue = "No")]
+        public string ApplicationEnabled { get; set; } = "No";
+        [DataMember]
+        [JsonConfEditor(
+            Label = "Intervalo de ejecucion (en min.)",
+            HelpText = "Definir el tiempo de espera (establecido en minutos) para la ejecucion de la aplicacion")]        
+        [JsonConfIntegerEditor]
+        public int IntervaloDeEjecucionEnMins { get; set; }
+
+        [DataMember]
+        [JsonConfEditor(Label = "Notificaciones")]
+        public ConfigurationNotificaciones ConfigurationNotificaciones { get; set; }    
+    }
+
+    [DataContract]
+    public class ConfigurationNotificaciones
+    {
+        [DataMember]
+        [JsonConfEditor(Label = "Host del servicio", HelpText = "Establecer el nombre o direccion IP del servicio de correo")]
+        public string HostService { get; set; }
+
+        [DataMember]
+        [JsonConfEditor(Label = "Puerto del servicio", HelpText = "Establecer el puerto del servicio de correo")]
+        public int PortService { get; set; }
+
+        [DataMember]
+        [JsonConfEditor(Label = "Usuario del servicio", HelpText = "Establecer el nombre de usuario del servicio de correo")]
+        public string UsernameService { get; set; }
+
+        [DataMember]
+        [JsonConfEditor(Label = "Contraseña del servicio", HelpText = "Establecer la contraseña del servicio de correo")]
+        public string PasswordService { get; set; }
+
+        [DataMember]
+        [JsonConfEditor(
+            Label = "Email del servicio de correo",
+            HelpText = "Establecer el correo desde la cual se enviaran las notificaciones/e-mails")]
+        public string EmailService { get; set; }
+
+        [MFPropertyDef]
+        [JsonConfEditor(
+            Label = "Propiedad de Email",
+            HelpText = "Propiedad de E-mail que se define en el objeto contacto externo/interno")]
+        [DataMember]
+        public MFIdentifier PDEmail { get; set; }        
+    }
+
+    [DataContract]
     public class Grupo
     {
         [DataMember]
-        [JsonConfEditor(TypeEditor = "options", Options = "{selectOptions:[\"Yes\",\"No\"]}", HelpText = "Habilita o deshabilita la aplicacion", Label = "Enabled", DefaultValue = "No")]
-        public string Enabled { get; set; } = "No";
+        [JsonConfEditor(TypeEditor = "options", Options = "{selectOptions:[\"Yes\",\"No\"]}", HelpText = "Habilita o deshabilita el grupo", Label = "Grupo habilitado", DefaultValue = "No")]
+        public string GrupoEnabled { get; set; } = "No";
 
         // Nombre de grupo
         [DataMember]
