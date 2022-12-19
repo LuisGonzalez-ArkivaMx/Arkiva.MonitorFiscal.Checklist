@@ -75,7 +75,7 @@ namespace Arkiva.MonitorFiscal.Checklist
     {
         [DataMember]
         [JsonConfEditor(TypeEditor = "options", Options = "{selectOptions:[\"Yes\",\"No\"]}", HelpText = "Habilita o deshabilita el grupo", Label = "Grupo habilitado", DefaultValue = "No")]
-        public string GrupoEnabled { get; set; } = "No";
+        public string GroupEnabled { get; set; } = "No";
 
         // Nombre de grupo
         [DataMember]

@@ -54,975 +54,579 @@ namespace Arkiva.MonitorFiscal.Checklist
                     TimeSpan.FromMinutes(Configuration.ConfigurationServiciosGenerales.IntervaloDeEjecucionEnMins),
                 () =>
                 {
-                    foreach (var grupo in Configuration.Grupos)
+                    if (Configuration.ConfigurationServiciosGenerales.ApplicationEnabled.Equals("Yes"))
                     {
-                        string sFechaActual = DateTime.Now.ToString("yyyy-MM-dd");
-
-                        if (grupo.GrupoEnabled.Equals("Yes") && ComparaFechaBaseContraUnaFechaInicioYFechaFin(sFechaActual, grupo.FechaInicio, grupo.FechaFin) == true)
+                        foreach (var grupo in Configuration.Grupos)
                         {
-                            // Inicializar objetos, clases y propiedades
-                            var ot_ContactoExternoSE = PermanentVault
-                                .ObjectTypeOperations
-                                .GetObjectTypeIDByAlias("MF.OT.ExternalContact");
+                            string sFechaActual = DateTime.Now.ToString("yyyy-MM-dd");
 
-                            var pd_EstatusDocumento = PermanentVault
-                                .PropertyDefOperations
-                                .GetPropertyDefIDByAlias("PD.EstatusDocumento");
-
-                            var pd_FrecuenciaDePagoDeNomina = PermanentVault
-                                .PropertyDefOperations
-                                .GetPropertyDefIDByAlias("PD.FrecuenciaDePagoDeNomina");
-
-                            var pd_TipoDeValidacionLeyDeOutsourcing = PermanentVault
-                                .PropertyDefOperations
-                                .GetPropertyDefIDByAlias("PD.TipoDeValidacionLeyDeOutsourcing");
-
-                            var pd_EstatusContactoExternoSE = PermanentVault
-                                .PropertyDefOperations
-                                .GetPropertyDefIDByAlias("PD.EstatusContactoExternoSE");
-
-                            //var pd_ContactoExternoSE = PermanentVault
-                            //    .PropertyDefOperations
-                            //    .GetPropertyDefIDByAlias("PD.ContactoExternoServicioEspecializado.obj");
-
-                            var pd_DocumentosSEContactoExterno = PermanentVault
-                                .PropertyDefOperations
-                                .GetPropertyDefIDByAlias("PD.DocumentosLeyOutsourcingContactoExterno");
-
-                            var pd_EstatusProveedor = PermanentVault
-                                .PropertyDefOperations
-                                .GetPropertyDefIDByAlias("PD.EstatusProveedorLeyOutsourcing");
-
-                            var searchBuilderOrganizacion = new MFSearchBuilder(PermanentVault);
-                            searchBuilderOrganizacion.Deleted(false);
-
-                            // Validar el filtro de busqueda de la Organizacion, si clase es null el filtro es por objeto
-                            if (grupo.ValidacionOrganizacion.ClaseOrganizacion is null)
-                                searchBuilderOrganizacion.ObjType(grupo.ValidacionOrganizacion.ObjetoOrganizacion);
-                            else // Si clase no es null, el filtro de busqueda es por clase
-                                searchBuilderOrganizacion.Class(grupo.ValidacionOrganizacion.ClaseOrganizacion);                            
-
-                            foreach (var organizacion in searchBuilderOrganizacion.FindEx())
+                            if (grupo.GroupEnabled.Equals("Yes") && ComparaFechaBaseContraUnaFechaInicioYFechaFin(sFechaActual, grupo.FechaInicio, grupo.FechaFin) == true)
                             {
-                                SysUtils.ReportInfoToEventLog("Organizacion: " + organizacion.Title);
+                                // Inicializar objetos, clases y propiedades
+                                var ot_ContactoExternoSE = PermanentVault
+                                    .ObjectTypeOperations
+                                    .GetObjectTypeIDByAlias("MF.OT.ExternalContact");
 
-                                bool bActivaProcesoChecklist = false;
-                                List<ObjVer> oListaDocumentosVigentes = new List<ObjVer>();
-                                bool bActivaRelacionDeDocumentosVigentes = false;
-                                List<ObjVer> oListaTodosLosDocumentosLO = new List<ObjVer>();
-                                List<ObjVerEx> contactosAdministradores = new List<ObjVerEx>();
-                                var oPropertyValues = new PropertyValues();
-                                bool bNotification = false;
-                                string sMainBodyMessage = "";
-                                string sBodyMessageDocuments = "";
-                                string sBodyMessageDocumentsEmp = "";
-                                string tBody = "";
-                                string tBodyEmpleado = "";
+                                var pd_EstatusDocumento = PermanentVault
+                                    .PropertyDefOperations
+                                    .GetPropertyDefIDByAlias("PD.EstatusDocumento");
 
-                                string RutaPlantilla = @"C:\Notificacion\leyOutsourcing.html";// ConfigurationManager.AppSettings["RutaPlantilla"].ToString();
-                                string RutaTbody = @"C:\Notificacion\tbody.html";//ConfigurationManager.AppSettings["RutaTbody"].ToString();
-                                string RutaLista = @"C:\Notificacion\lista.html";//ConfigurationManager.AppSettings["RutaLista"].ToString();
+                                var pd_FrecuenciaDePagoDeNomina = PermanentVault
+                                    .PropertyDefOperations
+                                    .GetPropertyDefIDByAlias("PD.FrecuenciaDePagoDeNomina");
 
-                                string RutaBanner = @"C:\Notificacion\img\Banner.png";// ConfigurationManager.AppSettings["RutaBanner"].ToString();
-                                string RutaCloud = @"C:\Notificacion\img\Cloud.png"; // ConfigurationManager.AppSettings["RutaCloud"].ToString();
-                                string RutaFooter = @"C:\Notificacion\img\Footer.png"; // ConfigurationManager.AppSettings["RutaFooter"].ToString();
+                                var pd_TipoDeValidacionLeyDeOutsourcing = PermanentVault
+                                    .PropertyDefOperations
+                                    .GetPropertyDefIDByAlias("PD.TipoDeValidacionLeyDeOutsourcing");
 
-                                string RutaTbodyEmpleado = @"C:\Notificacion\tbodyEmpleado.html";
-                                string RutaListaEmpleado = @"C:\Notificacion\listaEmpleado.html";
+                                var pd_EstatusContactoExternoSE = PermanentVault
+                                    .PropertyDefOperations
+                                    .GetPropertyDefIDByAlias("PD.EstatusContactoExternoSE");
 
-                                string Plantilla = LeerPlantilla(RutaPlantilla);
+                                //var pd_ContactoExternoSE = PermanentVault
+                                //    .PropertyDefOperations
+                                //    .GetPropertyDefIDByAlias("PD.ContactoExternoServicioEspecializado.obj");
 
-                                oPropertyValues = PermanentVault
-                                    .ObjectPropertyOperations
-                                    .GetProperties(organizacion.ObjVer);
+                                var pd_DocumentosSEContactoExterno = PermanentVault
+                                    .PropertyDefOperations
+                                    .GetPropertyDefIDByAlias("PD.DocumentosLeyOutsourcingContactoExterno");
 
-                                if (oPropertyValues.IndexOf(grupo.ContactoAdministrador) != -1)
+                                var pd_EstatusProveedor = PermanentVault
+                                    .PropertyDefOperations
+                                    .GetPropertyDefIDByAlias("PD.EstatusProveedorLeyOutsourcing");
+
+                                var searchBuilderOrganizacion = new MFSearchBuilder(PermanentVault);
+                                searchBuilderOrganizacion.Deleted(false);
+
+                                // Validar el filtro de busqueda de la Organizacion, si clase es null el filtro es por objeto
+                                if (grupo.ValidacionOrganizacion.ClaseOrganizacion is null)
+                                    searchBuilderOrganizacion.ObjType(grupo.ValidacionOrganizacion.ObjetoOrganizacion);
+                                else // Si clase no es null, el filtro de busqueda es por clase
+                                    searchBuilderOrganizacion.Class(grupo.ValidacionOrganizacion.ClaseOrganizacion);
+
+                                foreach (var organizacion in searchBuilderOrganizacion.FindEx())
                                 {
-                                    if (!oPropertyValues.SearchForPropertyEx(grupo.ContactoAdministrador, true).TypedValue.IsNULL())
+                                    SysUtils.ReportInfoToEventLog("Organizacion: " + organizacion.Title);
+
+                                    bool bActivaProcesoChecklist = false;
+                                    List<ObjVer> oListaDocumentosVigentes = new List<ObjVer>();
+                                    bool bActivaRelacionDeDocumentosVigentes = false;
+                                    List<ObjVer> oListaTodosLosDocumentosLO = new List<ObjVer>();
+                                    List<ObjVerEx> contactosAdministradores = new List<ObjVerEx>();
+                                    var oPropertyValues = new PropertyValues();
+                                    bool bNotification = false;
+                                    string sMainBodyMessage = "";
+                                    string sBodyMessageDocuments = "";
+                                    string sBodyMessageDocumentsEmp = "";
+                                    string tBody = "";
+                                    string tBodyEmpleado = "";
+
+                                    string RutaPlantilla = @"C:\Notificacion\leyOutsourcing.html";// ConfigurationManager.AppSettings["RutaPlantilla"].ToString();
+                                    string RutaTbody = @"C:\Notificacion\tbody.html";//ConfigurationManager.AppSettings["RutaTbody"].ToString();
+                                    string RutaLista = @"C:\Notificacion\lista.html";//ConfigurationManager.AppSettings["RutaLista"].ToString();
+
+                                    string RutaBanner = @"C:\Notificacion\img\Banner.png";// ConfigurationManager.AppSettings["RutaBanner"].ToString();
+                                    string RutaCloud = @"C:\Notificacion\img\Cloud.png"; // ConfigurationManager.AppSettings["RutaCloud"].ToString();
+                                    string RutaFooter = @"C:\Notificacion\img\Footer.png"; // ConfigurationManager.AppSettings["RutaFooter"].ToString();
+
+                                    string RutaTbodyEmpleado = @"C:\Notificacion\tbodyEmpleado.html";
+                                    string RutaListaEmpleado = @"C:\Notificacion\listaEmpleado.html";
+
+                                    string Plantilla = LeerPlantilla(RutaPlantilla);
+
+                                    oPropertyValues = PermanentVault
+                                        .ObjectPropertyOperations
+                                        .GetProperties(organizacion.ObjVer);
+
+                                    if (oPropertyValues.IndexOf(grupo.ContactoAdministrador) != -1)
                                     {
-                                        contactosAdministradores = oPropertyValues
-                                            .SearchForPropertyEx(grupo.ContactoAdministrador, true)
-                                            .TypedValue
-                                            .GetValueAsLookups().ToObjVerExs(PermanentVault);
-                                    }
-                                }
-
-                                if (oPropertyValues.IndexOf(pd_TipoDeValidacionLeyDeOutsourcing) != -1 && //grupo.CheckboxLeyOutsourcing
-                                    !oPropertyValues.SearchForPropertyEx(pd_TipoDeValidacionLeyDeOutsourcing, true).TypedValue.IsNULL()) //grupo.CheckboxLeyOutsourcing
-                                {
-                                    bool bValidaDocumentoPorProyecto = false;
-                                    List<ObjVerEx> searchResultsProyectoPorProveedor = new List<ObjVerEx>();
-
-                                    var tipoValidacionLeyOutsourcing = oPropertyValues
-                                        .SearchForPropertyEx(pd_TipoDeValidacionLeyDeOutsourcing, true)
-                                        .TypedValue
-                                        .GetLookupID();
-
-                                    var nombreOTituloObjetoPadre = oPropertyValues
-                                        .SearchForProperty((int)MFBuiltInPropertyDef
-                                        .MFBuiltInPropertyDefNameOrTitle)
-                                        .TypedValue
-                                        .Value;
-
-                                    var fechaInicioProveedor = oPropertyValues
-                                        .SearchForPropertyEx(grupo.FechaInicioProveedor, true)
-                                        .TypedValue
-                                        .GetValueAsLocalizedText();
-
-                                    // Validar tipo de proceso activado
-                                    if(tipoValidacionLeyOutsourcing == 1) // Validacion por Proveedor
-                                    {
-                                        bActivaProcesoChecklist = true;
-
-                                        SysUtils.ReportInfoToEventLog("Proceso 'Por Proveedor' activado: " + bActivaProcesoChecklist);
-                                    }
-                                    else if (tipoValidacionLeyOutsourcing == 2) // Validacion por Orden de Compra, Contrato y/o Proyecto
-                                    {
-                                        foreach (var documentoReferencia in grupo.ClasesReferencia)
+                                        if (!oPropertyValues.SearchForPropertyEx(grupo.ContactoAdministrador, true).TypedValue.IsNULL())
                                         {
-                                            var searchBuilderDocumentosReferencia = new MFSearchBuilder(PermanentVault);
-                                            searchBuilderDocumentosReferencia.Deleted(false);
-                                            searchBuilderDocumentosReferencia.Property
-                                            (
-                                                (int)MFBuiltInPropertyDef.MFBuiltInPropertyDefClass,
-                                                MFDataType.MFDatatypeLookup,
-                                                documentoReferencia.ClaseReferencia.ID
-                                            );
-                                            searchBuilderDocumentosReferencia.Property
-                                            (
-                                                grupo.PropertyDefProveedorSEDocumentos,
-                                                MFDataType.MFDatatypeMultiSelectLookup,
-                                                organizacion.ObjVer.ID
-                                            );
-
-                                            var searchResultsDocumentosReferencia = searchBuilderDocumentosReferencia.FindEx();
-
-                                            if (searchResultsDocumentosReferencia.Count > 0)
-                                            {
-                                                foreach (var documento in searchResultsDocumentosReferencia)
-                                                {
-                                                    var oProperties = documento.Properties;
-
-                                                    var iEstatus = oProperties.SearchForPropertyEx(documentoReferencia.EstatusClaseReferencia.ID, true).TypedValue.GetLookupID();
-
-                                                    if (documento.Class == 139) // Orden de Compra Emitida Proveedor
-                                                    {
-                                                        if (iEstatus == 1)
-                                                        {
-                                                            bActivaProcesoChecklist = true;
-                                                            break;
-                                                        }
-                                                    }
-                                                    else if (documento.Class == 113) // Contrato
-                                                    {
-                                                        if (iEstatus == 2 || iEstatus == 4)
-                                                        {
-                                                            bActivaProcesoChecklist = true;
-                                                            break;
-                                                        }
-                                                    }
-                                                    else if (documento.Class == 236) // Proyecto
-                                                    {
-                                                        if (iEstatus == 1)
-                                                        {
-                                                            var oLookupProyectoPorProveedor = new Lookup();
-                                                            var oLookupsProyectoPorProveedor = new Lookups();
-
-                                                            oLookupProyectoPorProveedor.Item = organizacion.ObjVer.ID;
-                                                            oLookupsProyectoPorProveedor.Add(-1, oLookupProyectoPorProveedor);
-
-                                                            // Buscar todos los proyectos del proveedor
-                                                            var searchBuilderProyectoPorProveedor = new MFSearchBuilder(organizacion.Vault);
-                                                            searchBuilderProyectoPorProveedor.Deleted(false);
-                                                            searchBuilderProyectoPorProveedor.Class(documento.Class);
-                                                            searchBuilderProyectoPorProveedor.Property
-                                                            (
-                                                                grupo.PropertyDefProveedorSEDocumentos, 
-                                                                MFDataType.MFDatatypeMultiSelectLookup, 
-                                                                oLookupsProyectoPorProveedor
-                                                            );
-
-                                                            searchResultsProyectoPorProveedor = searchBuilderProyectoPorProveedor.FindEx();
-
-                                                            bActivaProcesoChecklist = true;
-                                                            bValidaDocumentoPorProyecto = true;
-
-                                                            break;
-                                                        }
-                                                    }
-                                                    else
-                                                    {
-                                                        bActivaProcesoChecklist = false;
-                                                    }
-                                                }                                                
-                                            }
+                                            contactosAdministradores = oPropertyValues
+                                                .SearchForPropertyEx(grupo.ContactoAdministrador, true)
+                                                .TypedValue
+                                                .GetValueAsLookups().ToObjVerExs(PermanentVault);
                                         }
                                     }
-                                    else if (tipoValidacionLeyOutsourcing == 3) // Validacion por Empresa Interna
+
+                                    if (oPropertyValues.IndexOf(pd_TipoDeValidacionLeyDeOutsourcing) != -1 && //grupo.CheckboxLeyOutsourcing
+                                        !oPropertyValues.SearchForPropertyEx(pd_TipoDeValidacionLeyDeOutsourcing, true).TypedValue.IsNULL()) //grupo.CheckboxLeyOutsourcing
                                     {
-                                        bActivaProcesoChecklist = true;
+                                        bool bValidaDocumentoPorProyecto = false;
+                                        List<ObjVerEx> searchResultsProyectoPorProveedor = new List<ObjVerEx>();
 
-                                        SysUtils.ReportInfoToEventLog("Proceso 'Por Empresa Interna' activado: " + bActivaProcesoChecklist);
-                                    }
+                                        var tipoValidacionLeyOutsourcing = oPropertyValues
+                                            .SearchForPropertyEx(pd_TipoDeValidacionLeyDeOutsourcing, true)
+                                            .TypedValue
+                                            .GetLookupID();
 
-                                    if (bActivaProcesoChecklist == true)
-                                    {
-                                        SysUtils.ReportInfoToEventLog("Proveedor: " + organizacion.Title);
+                                        var nombreOTituloObjetoPadre = oPropertyValues
+                                            .SearchForProperty((int)MFBuiltInPropertyDef
+                                            .MFBuiltInPropertyDefNameOrTitle)
+                                            .TypedValue
+                                            .Value;
 
-                                        string sChecklistDocumentName = "";
-                                        bool bConcatenateDocument = false;
-                                        string sPeriodoVencimientoDocumentoLO = "";
-                                        string sDocumentosEnviadosAEmpleado = "";
-                                        string sPeriodosDeDocumentosEnviadosAEmpleado = "";
-                                        bool bDelete = true;
+                                        var fechaInicioProveedor = oPropertyValues
+                                            .SearchForPropertyEx(grupo.FechaInicioProveedor, true)
+                                            .TypedValue
+                                            .GetValueAsLocalizedText();
 
-                                        // Eliminar del proveedor la informacion de documentos faltantes del recorrido anterior
-                                        Sql.Query oQuery = new Sql.Query();
-                                        oQuery.InsertarDocumentosFaltantesChecklist(bDelete, iProveedorID: organizacion.ObjVer.ID, sPeriodo: sFechaActual);
-
-                                        // Recorrido de documentos proveedor
-                                        foreach (var claseDocumento in grupo.DocumentosProveedor)
+                                        // Validar tipo de proceso activado
+                                        if (tipoValidacionLeyOutsourcing == 1) // Validacion por Proveedor
                                         {
-                                            bDelete = false;
+                                            bActivaProcesoChecklist = true;
 
-                                            List<ObjVer> oDocumentosVigentesPorValidar = new List<ObjVer>();
-                                            List<ObjVer> oDocumentosVencidos = new List<ObjVer>();
-                                            var sPeriodoDocumentoProveedor = "";
-                                            var szNombreClaseDocumento = "";
+                                            SysUtils.ReportInfoToEventLog("Proceso 'Por Proveedor' activado: " + bActivaProcesoChecklist);
+                                        }
+                                        else if (tipoValidacionLeyOutsourcing == 2) // Validacion por Orden de Compra, Contrato y/o Proyecto
+                                        {
+                                            foreach (var documentoReferencia in grupo.ClasesReferencia)
+                                            {
+                                                var searchBuilderDocumentosReferencia = new MFSearchBuilder(PermanentVault);
+                                                searchBuilderDocumentosReferencia.Deleted(false);
+                                                searchBuilderDocumentosReferencia.Property
+                                                (
+                                                    (int)MFBuiltInPropertyDef.MFBuiltInPropertyDefClass,
+                                                    MFDataType.MFDatatypeLookup,
+                                                    documentoReferencia.ClaseReferencia.ID
+                                                );
+                                                searchBuilderDocumentosReferencia.Property
+                                                (
+                                                    grupo.PropertyDefProveedorSEDocumentos,
+                                                    MFDataType.MFDatatypeMultiSelectLookup,
+                                                    organizacion.ObjVer.ID
+                                                );
 
-                                            ObjectClass oObjectClass = PermanentVault
-                                                .ClassOperations
-                                                .GetObjectClass(claseDocumento.DocumentoProveedor.ID);
+                                                var searchResultsDocumentosReferencia = searchBuilderDocumentosReferencia.FindEx();
 
-                                            szNombreClaseDocumento = oObjectClass.Name;
-
-                                            DateTime dtFechaInicioPeriodo = Convert.ToDateTime(fechaInicioProveedor);
-
-                                            DateTime dtFechaFinPeriodo = ObtenerRangoDePeriodoDelDocumento
-                                            (
-                                                dtFechaInicioPeriodo,
-                                                claseDocumento.VigenciaDocumentoProveedor,
-                                                1
-                                            );
-
-                                            var searchBuilderDocumentosProveedor = new MFSearchBuilder(PermanentVault);
-                                            searchBuilderDocumentosProveedor.Deleted(false);
-                                            searchBuilderDocumentosProveedor.Property
-                                            (
-                                                (int)MFBuiltInPropertyDef.MFBuiltInPropertyDefClass,
-                                                MFDataType.MFDatatypeLookup,
-                                                claseDocumento.DocumentoProveedor.ID
-                                            );
-                                            searchBuilderDocumentosProveedor.Property
-                                            (
-                                                grupo.PropertyDefProveedorSEDocumentos,
-                                                MFDataType.MFDatatypeMultiSelectLookup,
-                                                organizacion.ObjVer.ID
-                                            );
-                                            searchBuilderDocumentosProveedor.Property
-                                            (
-                                                MFBuiltInPropertyDef.MFBuiltInPropertyDefWorkflow,
-                                                MFDataType.MFDatatypeLookup,
-                                                grupo.ConfigurationWorkflow.WorkflowChecklist.WorkflowValidacionesChecklist.ID
-                                            );
-                                            searchBuilderDocumentosProveedor.Property
-                                            (
-                                                MFBuiltInPropertyDef.MFBuiltInPropertyDefState,
-                                                MFDataType.MFDatatypeLookup,
-                                                grupo.ConfigurationWorkflow.WorkflowChecklist.EstadoDocumentoProcesado.ID
-                                            );
-
-                                            if (searchBuilderDocumentosProveedor.FindEx().Count > 0) // Se encontro al menos un documento
-                                            {                                                
-                                                if (claseDocumento.VigenciaDocumentoProveedor != "No Aplica")
+                                                if (searchResultsDocumentosReferencia.Count > 0)
                                                 {
-                                                    // Validar fecha fin contra la fecha actual                                            
-                                                    string sFechaFin = dtFechaFinPeriodo.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture);
-
-                                                    int iDateCompare = DateTime.Compare
-                                                    (
-                                                        Convert.ToDateTime(sFechaActual), // t1
-                                                        Convert.ToDateTime(sFechaFin)     // t2
-                                                    );
-
-                                                    while (iDateCompare >= 0)
+                                                    foreach (var documento in searchResultsDocumentosReferencia)
                                                     {
-                                                        foreach (var documentoProveedor in searchBuilderDocumentosProveedor.FindEx())
+                                                        var oProperties = documento.Properties;
+
+                                                        var iEstatus = oProperties.SearchForPropertyEx(documentoReferencia.EstatusClaseReferencia.ID, true).TypedValue.GetLookupID();
+
+                                                        if (documento.Class == 139) // Orden de Compra Emitida Proveedor
                                                         {
-                                                            SysUtils.ReportInfoToEventLog("Documento: " + documentoProveedor.Title + ", ID: " + documentoProveedor.ObjVer.ID);
-
-                                                            oPropertyValues = PermanentVault
-                                                                .ObjectPropertyOperations
-                                                                .GetProperties(documentoProveedor.ObjVer);
-
-                                                            // Obtener fecha del documento
-                                                            var oFechaDeDocumento = oPropertyValues
-                                                                .SearchForPropertyEx(grupo.FechaDeDocumento, true)
-                                                                .TypedValue
-                                                                .Value;
-
-                                                            DateTime dtFechaDeDocumento = Convert.ToDateTime(oFechaDeDocumento);
-
-                                                            string sFechaDeDocumento = dtFechaDeDocumento.ToString("yyyy-MM-dd");
-
-                                                            // Validar si la fecha del documento esta dentro del periodo obtenido
-                                                            if (ComparaFechaBaseContraUnaFechaInicioYFechaFin(
-                                                                sFechaDeDocumento,
-                                                                dtFechaInicioPeriodo,
-                                                                dtFechaFinPeriodo) == true)
+                                                            if (iEstatus == 1)
                                                             {
-                                                                oDocumentosVigentesPorValidar.Add(documentoProveedor.ObjVer);
+                                                                bActivaProcesoChecklist = true;
+                                                                break;
                                                             }
-                                                            else
+                                                        }
+                                                        else if (documento.Class == 113) // Contrato
+                                                        {
+                                                            if (iEstatus == 2 || iEstatus == 4)
                                                             {
-                                                                oDocumentosVencidos.Add(documentoProveedor.ObjVer);                                                                
+                                                                bActivaProcesoChecklist = true;
+                                                                break;
                                                             }
-
-                                                            // Validar vigencia tomando como referencia el ultimo periodo
-                                                            if (ValidarVigenciaDeDocumentoEnPeriodoActual(
-                                                                claseDocumento.VigenciaDocumentoProveedor, 
-                                                                dtFechaDeDocumento) == true)
+                                                        }
+                                                        else if (documento.Class == 236) // Proyecto
+                                                        {
+                                                            if (iEstatus == 1)
                                                             {
-                                                                // Actualizar el estatus "Vigente" al documento
-                                                                ActualizarEstatusDocumento
+                                                                var oLookupProyectoPorProveedor = new Lookup();
+                                                                var oLookupsProyectoPorProveedor = new Lookups();
+
+                                                                oLookupProyectoPorProveedor.Item = organizacion.ObjVer.ID;
+                                                                oLookupsProyectoPorProveedor.Add(-1, oLookupProyectoPorProveedor);
+
+                                                                // Buscar todos los proyectos del proveedor
+                                                                var searchBuilderProyectoPorProveedor = new MFSearchBuilder(organizacion.Vault);
+                                                                searchBuilderProyectoPorProveedor.Deleted(false);
+                                                                searchBuilderProyectoPorProveedor.Class(documento.Class);
+                                                                searchBuilderProyectoPorProveedor.Property
                                                                 (
-                                                                    "Documento",
-                                                                    documentoProveedor.ObjVer, 
-                                                                    pd_EstatusDocumento, 
-                                                                    1,
-                                                                    grupo.ConfigurationWorkflow.WorkflowDocumentoProveedor.WorkflowValidacionesDocProveedor.ID, 
-                                                                    grupo.ConfigurationWorkflow.WorkflowDocumentoProveedor.EstadoDocumentoVigenteProveedor.ID                                                                    
+                                                                    grupo.PropertyDefProveedorSEDocumentos,
+                                                                    MFDataType.MFDatatypeMultiSelectLookup,
+                                                                    oLookupsProyectoPorProveedor
                                                                 );
-                                                            }
-                                                            else
-                                                            {
-                                                                SysUtils.ReportInfoToEventLog("Id documento: " + documentoProveedor.ObjVer.ID);
 
-                                                                // Agregar el estatus "Vencido" al documento
-                                                                ActualizarEstatusDocumento
-                                                                (
-                                                                    "Documento",
-                                                                    documentoProveedor.ObjVer, 
-                                                                    pd_EstatusDocumento, 
-                                                                    2,
-                                                                    grupo.ConfigurationWorkflow.WorkflowChecklist.WorkflowValidacionesChecklist.ID, 
-                                                                    grupo.ConfigurationWorkflow.WorkflowChecklist.EstadoDocumentoVencido.ID
-                                                                );                                                                
-                                                            }
+                                                                searchResultsProyectoPorProveedor = searchBuilderProyectoPorProveedor.FindEx();
 
-                                                            if (claseDocumento.TipoDocumentoChecklist == "Comprobante de pago")
-                                                            {
-                                                                ObjVer oDocumentoRelacionado = new ObjVer();
+                                                                bActivaProcesoChecklist = true;
+                                                                bValidaDocumentoPorProyecto = true;
 
-                                                                // Buscar documento relacionado al comprobante de pago
-                                                                if (oPropertyValues.IndexOf(claseDocumento.PropertyDefDocumentoRelacionado) != -1
-                                                                    && !oPropertyValues.SearchForPropertyEx(claseDocumento.PropertyDefDocumentoRelacionado, true).TypedValue.IsNULL())
-                                                                {
-                                                                    oDocumentoRelacionado = oPropertyValues
-                                                                        .SearchForPropertyEx(claseDocumento.PropertyDefDocumentoRelacionado, true)
-                                                                        .TypedValue
-                                                                        .GetValueAsLookup().GetAsObjVer();
-                                                                }
-
-                                                                // Enviar informacion a la tabla de comprobantes de pago
-                                                                oQuery.InsertarComprobantesPago(
-                                                                    szNombreClaseDocumento,
-                                                                    documentoProveedor.ID,
-                                                                    nombreOTituloObjetoPadre.ToString(),
-                                                                    organizacion.ID,
-                                                                    oDocumentoRelacionado.ID);
+                                                                break;
                                                             }
                                                         }
-
-                                                        var sPeriodoDocumentoFaltante = ObtenerPeriodoDeDocumentoFaltante
-                                                            (
-                                                                claseDocumento.VigenciaDocumentoProveedor,
-                                                                dtFechaInicioPeriodo,
-                                                                dtFechaFinPeriodo
-                                                            );
-
-                                                        if (oDocumentosVigentesPorValidar.Count < 1)
+                                                        else
                                                         {
-                                                            // Se agrega al correo el nombre del documento no encontrado
-                                                            // en el periodo validado
-                                                            string ListaItems = LeerPlantilla(RutaLista);
-                                                            sChecklistDocumentName += ListaItems.Replace("[Documento]", szNombreClaseDocumento);                                                         
-
-                                                            sPeriodoDocumentoProveedor = sPeriodoDocumentoFaltante;
-
-                                                            // Modificar formato de la fecha del periodo del documento
-                                                            if (claseDocumento.VigenciaDocumentoProveedor == "Mensual" ||
-                                                                claseDocumento.VigenciaDocumentoProveedor == "Bimestral" ||
-                                                                claseDocumento.VigenciaDocumentoProveedor == "Trimestral" ||
-                                                                claseDocumento.VigenciaDocumentoProveedor == "Cuatrimestral" ||
-                                                                claseDocumento.VigenciaDocumentoProveedor == "Anual")
-                                                            {
-                                                                sPeriodoDocumentoProveedor = dtFechaInicioPeriodo.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture);
-                                                            }
-
-                                                            if (claseDocumento.TipoDocumentoChecklist == "Documento checklist")
-                                                            {
-
-                                                                // Insert
-                                                                oQuery.InsertarDocumentosFaltantesChecklist(
-                                                                    bDelete,
-                                                                    sProveedor: nombreOTituloObjetoPadre.ToString(),
-                                                                    iProveedorID: organizacion.ObjVer.ID,
-                                                                    sCategoria: "Documento Vencido",
-                                                                    sTipoDocumento: "Documento Proveedor",
-                                                                    sNombreDocumento: szNombreClaseDocumento,
-                                                                    iDocumentoID: claseDocumento.DocumentoProveedor.ID,
-                                                                    sVigencia: claseDocumento.VigenciaDocumentoProveedor,
-                                                                    sPeriodo: sPeriodoDocumentoProveedor);
-                                                            }
-
-                                                            sPeriodoVencimientoDocumentoLO += sPeriodoDocumentoProveedor + "<br/>";
-                                                                                                                                                                                   
-                                                            bNotification = true;
-                                                            bConcatenateDocument = true;
+                                                            bActivaProcesoChecklist = false;
                                                         }
+                                                    }
+                                                }
+                                            }
+                                        }
+                                        else if (tipoValidacionLeyOutsourcing == 3) // Validacion por Empresa Interna
+                                        {
+                                            bActivaProcesoChecklist = true;
 
-                                                        // Enviar los documentos vencidos a la tabla de documentos faltantes checklist 
-                                                        foreach (var documento in oDocumentosVencidos)
+                                            SysUtils.ReportInfoToEventLog("Proceso 'Por Empresa Interna' activado: " + bActivaProcesoChecklist);
+                                        }
+
+                                        if (bActivaProcesoChecklist == true)
+                                        {
+                                            SysUtils.ReportInfoToEventLog("Proveedor: " + organizacion.Title);
+
+                                            string sChecklistDocumentName = "";
+                                            bool bConcatenateDocument = false;
+                                            string sPeriodoVencimientoDocumentoLO = "";
+                                            string sDocumentosEnviadosAEmpleado = "";
+                                            string sPeriodosDeDocumentosEnviadosAEmpleado = "";
+                                            bool bDelete = true;
+
+                                            // Eliminar del proveedor la informacion de documentos faltantes del recorrido anterior
+                                            Sql.Query oQuery = new Sql.Query();
+                                            oQuery.InsertarDocumentosFaltantesChecklist(bDelete, iProveedorID: organizacion.ObjVer.ID, sPeriodo: sFechaActual);
+
+                                            // Recorrido de documentos proveedor
+                                            foreach (var claseDocumento in grupo.DocumentosProveedor)
+                                            {
+                                                bDelete = false;
+
+                                                List<ObjVer> oDocumentosVigentesPorValidar = new List<ObjVer>();
+                                                List<ObjVer> oDocumentosVencidos = new List<ObjVer>();
+                                                var sPeriodoDocumentoProveedor = "";
+                                                var szNombreClaseDocumento = "";
+
+                                                ObjectClass oObjectClass = PermanentVault
+                                                    .ClassOperations
+                                                    .GetObjectClass(claseDocumento.DocumentoProveedor.ID);
+
+                                                szNombreClaseDocumento = oObjectClass.Name;
+
+                                                DateTime dtFechaInicioPeriodo = Convert.ToDateTime(fechaInicioProveedor);
+
+                                                DateTime dtFechaFinPeriodo = ObtenerRangoDePeriodoDelDocumento
+                                                (
+                                                    dtFechaInicioPeriodo,
+                                                    claseDocumento.VigenciaDocumentoProveedor,
+                                                    1
+                                                );
+
+                                                var searchBuilderDocumentosProveedor = new MFSearchBuilder(PermanentVault);
+                                                searchBuilderDocumentosProveedor.Deleted(false);
+                                                searchBuilderDocumentosProveedor.Property
+                                                (
+                                                    (int)MFBuiltInPropertyDef.MFBuiltInPropertyDefClass,
+                                                    MFDataType.MFDatatypeLookup,
+                                                    claseDocumento.DocumentoProveedor.ID
+                                                );
+                                                searchBuilderDocumentosProveedor.Property
+                                                (
+                                                    grupo.PropertyDefProveedorSEDocumentos,
+                                                    MFDataType.MFDatatypeMultiSelectLookup,
+                                                    organizacion.ObjVer.ID
+                                                );
+                                                searchBuilderDocumentosProveedor.Property
+                                                (
+                                                    MFBuiltInPropertyDef.MFBuiltInPropertyDefWorkflow,
+                                                    MFDataType.MFDatatypeLookup,
+                                                    grupo.ConfigurationWorkflow.WorkflowChecklist.WorkflowValidacionesChecklist.ID
+                                                );
+                                                searchBuilderDocumentosProveedor.Property
+                                                (
+                                                    MFBuiltInPropertyDef.MFBuiltInPropertyDefState,
+                                                    MFDataType.MFDatatypeLookup,
+                                                    grupo.ConfigurationWorkflow.WorkflowChecklist.EstadoDocumentoProcesado.ID
+                                                );
+
+                                                if (searchBuilderDocumentosProveedor.FindEx().Count > 0) // Se encontro al menos un documento
+                                                {
+                                                    if (claseDocumento.VigenciaDocumentoProveedor != "No Aplica")
+                                                    {
+                                                        // Validar fecha fin contra la fecha actual                                            
+                                                        string sFechaFin = dtFechaFinPeriodo.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture);
+
+                                                        int iDateCompare = DateTime.Compare
+                                                        (
+                                                            Convert.ToDateTime(sFechaActual), // t1
+                                                            Convert.ToDateTime(sFechaFin)     // t2
+                                                        );
+
+                                                        while (iDateCompare >= 0)
                                                         {
-                                                            sPeriodoDocumentoProveedor = sPeriodoDocumentoFaltante;
-
-                                                            // Modificar formato de la fecha del periodo del documento
-                                                            if (claseDocumento.VigenciaDocumentoProveedor == "Mensual" ||
-                                                                claseDocumento.VigenciaDocumentoProveedor == "Bimestral" ||
-                                                                claseDocumento.VigenciaDocumentoProveedor == "Trimestral" ||
-                                                                claseDocumento.VigenciaDocumentoProveedor == "Cuatrimestral" ||
-                                                                claseDocumento.VigenciaDocumentoProveedor == "Anual")
+                                                            foreach (var documentoProveedor in searchBuilderDocumentosProveedor.FindEx())
                                                             {
-                                                                sPeriodoDocumentoProveedor = dtFechaInicioPeriodo.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture);
-                                                            }
+                                                                SysUtils.ReportInfoToEventLog("Documento: " + documentoProveedor.Title + ", ID: " + documentoProveedor.ObjVer.ID);
 
-                                                            if (claseDocumento.TipoDocumentoChecklist == "Documento checklist")
-                                                            {
-                                                                SysUtils.ReportInfoToEventLog("Insertando documento: " + documento.ID + " en la tabla DocumentosCaducados");
+                                                                oPropertyValues = PermanentVault
+                                                                    .ObjectPropertyOperations
+                                                                    .GetProperties(documentoProveedor.ObjVer);
 
-                                                                if (bValidaDocumentoPorProyecto == true)
+                                                                // Obtener fecha del documento
+                                                                var oFechaDeDocumento = oPropertyValues
+                                                                    .SearchForPropertyEx(grupo.FechaDeDocumento, true)
+                                                                    .TypedValue
+                                                                    .Value;
+
+                                                                DateTime dtFechaDeDocumento = Convert.ToDateTime(oFechaDeDocumento);
+
+                                                                string sFechaDeDocumento = dtFechaDeDocumento.ToString("yyyy-MM-dd");
+
+                                                                // Validar si la fecha del documento esta dentro del periodo obtenido
+                                                                if (ComparaFechaBaseContraUnaFechaInicioYFechaFin(
+                                                                    sFechaDeDocumento,
+                                                                    dtFechaInicioPeriodo,
+                                                                    dtFechaFinPeriodo) == true)
                                                                 {
-                                                                    foreach (var proyecto in searchResultsProyectoPorProveedor)
-                                                                    {
-                                                                        var pd_DocumentosRelacionadosAlProyecto = proyecto.Vault.PropertyDefOperations.GetPropertyDefIDByAlias("PD.Document");
-                                                                        var oPropertiesProyecto = proyecto.Properties;
-
-                                                                        var oListDocumentosProyecto = oPropertiesProyecto
-                                                                            .SearchForPropertyEx(pd_DocumentosRelacionadosAlProyecto, true)
-                                                                            .TypedValue
-                                                                            .GetValueAsLookups()
-                                                                            .ToObjVerExs(proyecto.Vault);
-
-                                                                        foreach (var documentoProyecto in oListDocumentosProyecto)
-                                                                        {
-                                                                            if (documento.ID == documentoProyecto.ObjVer.ID)
-                                                                            {
-                                                                                // Insert la tabla de documentos caducados
-                                                                                oQuery.InsertarDocumentosCaducados(
-                                                                                    sProveedor: nombreOTituloObjetoPadre.ToString(),
-                                                                                    iProveedorID: organizacion.ObjVer.ID,
-                                                                                    sProyecto: proyecto.Title,
-                                                                                    iProyectoID: proyecto.ID,
-                                                                                    sCategoria: "Documento Vencido",
-                                                                                    sTipoDocumento: "Documento Proveedor",
-                                                                                    sNombreDocumento: szNombreClaseDocumento,
-                                                                                    iDocumentoID: documento.ID,
-                                                                                    sVigencia: claseDocumento.VigenciaDocumentoProveedor,
-                                                                                    sPeriodo: sPeriodoDocumentoProveedor);
-                                                                            }
-                                                                            else
-                                                                            {
-                                                                                // Enviar a la tabla de documentos faltantes
-                                                                                oQuery.InsertarDocumentosFaltantesChecklist(
-                                                                                    bDelete,
-                                                                                    sProveedor: nombreOTituloObjetoPadre.ToString(),
-                                                                                    iProveedorID: organizacion.ObjVer.ID,
-                                                                                    sProyecto: proyecto.Title,
-                                                                                    iProyectoID: proyecto.ID,
-                                                                                    sCategoria: "Documento Faltante",
-                                                                                    sTipoDocumento: "Documento Proveedor",
-                                                                                    sNombreDocumento: szNombreClaseDocumento,
-                                                                                    iDocumentoID: 0,
-                                                                                    sVigencia: claseDocumento.VigenciaDocumentoProveedor,
-                                                                                    sPeriodo: sPeriodoDocumentoProveedor);
-                                                                            }
-                                                                        }                                                                        
-                                                                    }
+                                                                    oDocumentosVigentesPorValidar.Add(documentoProveedor.ObjVer);
                                                                 }
                                                                 else
                                                                 {
+                                                                    oDocumentosVencidos.Add(documentoProveedor.ObjVer);
+                                                                }
+
+                                                                // Validar vigencia tomando como referencia el ultimo periodo
+                                                                if (ValidarVigenciaDeDocumentoEnPeriodoActual(
+                                                                    claseDocumento.VigenciaDocumentoProveedor,
+                                                                    dtFechaDeDocumento) == true)
+                                                                {
+                                                                    // Actualizar el estatus "Vigente" al documento
+                                                                    ActualizarEstatusDocumento
+                                                                    (
+                                                                        "Documento",
+                                                                        documentoProveedor.ObjVer,
+                                                                        pd_EstatusDocumento,
+                                                                        1,
+                                                                        grupo.ConfigurationWorkflow.WorkflowDocumentoProveedor.WorkflowValidacionesDocProveedor.ID,
+                                                                        grupo.ConfigurationWorkflow.WorkflowDocumentoProveedor.EstadoDocumentoVigenteProveedor.ID
+                                                                    );
+                                                                }
+                                                                else
+                                                                {
+                                                                    SysUtils.ReportInfoToEventLog("Id documento: " + documentoProveedor.ObjVer.ID);
+
+                                                                    // Agregar el estatus "Vencido" al documento
+                                                                    ActualizarEstatusDocumento
+                                                                    (
+                                                                        "Documento",
+                                                                        documentoProveedor.ObjVer,
+                                                                        pd_EstatusDocumento,
+                                                                        2,
+                                                                        grupo.ConfigurationWorkflow.WorkflowChecklist.WorkflowValidacionesChecklist.ID,
+                                                                        grupo.ConfigurationWorkflow.WorkflowChecklist.EstadoDocumentoVencido.ID
+                                                                    );
+                                                                }
+
+                                                                if (claseDocumento.TipoDocumentoChecklist == "Comprobante de pago")
+                                                                {
+                                                                    ObjVer oDocumentoRelacionado = new ObjVer();
+
+                                                                    // Buscar documento relacionado al comprobante de pago
+                                                                    if (oPropertyValues.IndexOf(claseDocumento.PropertyDefDocumentoRelacionado) != -1
+                                                                        && !oPropertyValues.SearchForPropertyEx(claseDocumento.PropertyDefDocumentoRelacionado, true).TypedValue.IsNULL())
+                                                                    {
+                                                                        oDocumentoRelacionado = oPropertyValues
+                                                                            .SearchForPropertyEx(claseDocumento.PropertyDefDocumentoRelacionado, true)
+                                                                            .TypedValue
+                                                                            .GetValueAsLookup().GetAsObjVer();
+                                                                    }
+
+                                                                    // Enviar informacion a la tabla de comprobantes de pago
+                                                                    oQuery.InsertarComprobantesPago(
+                                                                        szNombreClaseDocumento,
+                                                                        documentoProveedor.ID,
+                                                                        nombreOTituloObjetoPadre.ToString(),
+                                                                        organizacion.ID,
+                                                                        oDocumentoRelacionado.ID);
+                                                                }
+                                                            }
+
+                                                            var sPeriodoDocumentoFaltante = ObtenerPeriodoDeDocumentoFaltante
+                                                                (
+                                                                    claseDocumento.VigenciaDocumentoProveedor,
+                                                                    dtFechaInicioPeriodo,
+                                                                    dtFechaFinPeriodo
+                                                                );
+
+                                                            if (oDocumentosVigentesPorValidar.Count < 1)
+                                                            {
+                                                                // Se agrega al correo el nombre del documento no encontrado
+                                                                // en el periodo validado
+                                                                string ListaItems = LeerPlantilla(RutaLista);
+                                                                sChecklistDocumentName += ListaItems.Replace("[Documento]", szNombreClaseDocumento);
+
+                                                                sPeriodoDocumentoProveedor = sPeriodoDocumentoFaltante;
+
+                                                                // Modificar formato de la fecha del periodo del documento
+                                                                if (claseDocumento.VigenciaDocumentoProveedor == "Mensual" ||
+                                                                    claseDocumento.VigenciaDocumentoProveedor == "Bimestral" ||
+                                                                    claseDocumento.VigenciaDocumentoProveedor == "Trimestral" ||
+                                                                    claseDocumento.VigenciaDocumentoProveedor == "Cuatrimestral" ||
+                                                                    claseDocumento.VigenciaDocumentoProveedor == "Anual")
+                                                                {
+                                                                    sPeriodoDocumentoProveedor = dtFechaInicioPeriodo.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture);
+                                                                }
+
+                                                                if (claseDocumento.TipoDocumentoChecklist == "Documento checklist")
+                                                                {
+
                                                                     // Insert
-                                                                    oQuery.InsertarDocumentosCaducados(
+                                                                    oQuery.InsertarDocumentosFaltantesChecklist(
+                                                                        bDelete,
                                                                         sProveedor: nombreOTituloObjetoPadre.ToString(),
                                                                         iProveedorID: organizacion.ObjVer.ID,
                                                                         sCategoria: "Documento Vencido",
                                                                         sTipoDocumento: "Documento Proveedor",
                                                                         sNombreDocumento: szNombreClaseDocumento,
-                                                                        iDocumentoID: documento.ID,
+                                                                        iDocumentoID: claseDocumento.DocumentoProveedor.ID,
                                                                         sVigencia: claseDocumento.VigenciaDocumentoProveedor,
                                                                         sPeriodo: sPeriodoDocumentoProveedor);
-                                                                }                                                                
+                                                                }
+
+                                                                sPeriodoVencimientoDocumentoLO += sPeriodoDocumentoProveedor + "<br/>";
+
+                                                                bNotification = true;
+                                                                bConcatenateDocument = true;
                                                             }
-                                                        }
 
-                                                        // Crear nuevo periodo a partir de fecha fin que se convierte en la nueva fecha inicio
-                                                        dtFechaInicioPeriodo = dtFechaFinPeriodo;
-                                                        dtFechaFinPeriodo = ObtenerRangoDePeriodoDelDocumento
-                                                        (
-                                                            dtFechaInicioPeriodo,
-                                                            claseDocumento.VigenciaDocumentoProveedor,
-                                                            1
-                                                        );
-
-                                                        sFechaFin = "";
-                                                        sFechaFin = dtFechaFinPeriodo.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture);
-
-                                                        iDateCompare = DateTime.Compare
-                                                        (
-                                                            Convert.ToDateTime(sFechaActual), // t1
-                                                            Convert.ToDateTime(sFechaFin)     // t2
-                                                        );
-                                                    }
-
-                                                    if (oDocumentosVigentesPorValidar.Count > 0)
-                                                    {
-                                                        var sComparaFecha1 = "";
-                                                        var sComparaFecha2 = "";
-                                                        var dtFecha1 = new DateTime();
-                                                        var dtFecha2 = new DateTime();
-                                                        var dtFechaFinal = new DateTime();
-                                                        var objVerDocumento1 = new ObjVer();
-                                                        var objVerDocumento2 = new ObjVer();
-                                                        var objVerDocumentoFinal = new ObjVer();                                                        
-
-                                                        // Obtener el documento mas recientes de los encontrados
-                                                        foreach (ObjVer documento in oDocumentosVigentesPorValidar)
-                                                        {
-                                                            oListaTodosLosDocumentosLO.Add(documento);
-
-                                                            oPropertyValues = PermanentVault
-                                                                .ObjectPropertyOperations
-                                                                .GetProperties(documento);                                                            
-
-                                                            if (oPropertyValues.IndexOf(pd_EstatusDocumento) != -1)
+                                                            // Enviar los documentos vencidos a la tabla de documentos faltantes checklist 
+                                                            foreach (var documento in oDocumentosVencidos)
                                                             {
-                                                                var oFechaDocumento = oPropertyValues
-                                                                .SearchForPropertyEx(grupo.FechaDeDocumento, true)
-                                                                .TypedValue
-                                                                .Value;
+                                                                sPeriodoDocumentoProveedor = sPeriodoDocumentoFaltante;
 
-                                                                // Comparar fecha de documentos (misma clase de documento) encontrados
-                                                                // Obtener el documento mas reciente y vigente
-                                                                if (sComparaFecha1 == "")
+                                                                // Modificar formato de la fecha del periodo del documento
+                                                                if (claseDocumento.VigenciaDocumentoProveedor == "Mensual" ||
+                                                                    claseDocumento.VigenciaDocumentoProveedor == "Bimestral" ||
+                                                                    claseDocumento.VigenciaDocumentoProveedor == "Trimestral" ||
+                                                                    claseDocumento.VigenciaDocumentoProveedor == "Cuatrimestral" ||
+                                                                    claseDocumento.VigenciaDocumentoProveedor == "Anual")
                                                                 {
-                                                                    dtFecha1 = Convert.ToDateTime(oFechaDocumento);
-                                                                    sComparaFecha1 = dtFecha1.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture);
-                                                                    objVerDocumento1 = documento;
-                                                                }
-                                                                else
-                                                                {
-                                                                    dtFecha2 = Convert.ToDateTime(oFechaDocumento);
-                                                                    sComparaFecha2 = dtFecha2.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture);
-                                                                    objVerDocumento2 = documento;
+                                                                    sPeriodoDocumentoProveedor = dtFechaInicioPeriodo.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture);
                                                                 }
 
-                                                                if (sComparaFecha1 != "" && sComparaFecha2 != "")
+                                                                if (claseDocumento.TipoDocumentoChecklist == "Documento checklist")
                                                                 {
-                                                                    int iComparaFechasDeDocumentoChecklist = DateTime.Compare
-                                                                    (
-                                                                        Convert.ToDateTime(sComparaFecha1),
-                                                                        Convert.ToDateTime(sComparaFecha2)
-                                                                    );
+                                                                    SysUtils.ReportInfoToEventLog("Insertando documento: " + documento.ID + " en la tabla DocumentosCaducados");
 
-                                                                    if (iComparaFechasDeDocumentoChecklist < 0)
+                                                                    if (bValidaDocumentoPorProyecto == true)
                                                                     {
-                                                                        sComparaFecha1 = "";
-                                                                        objVerDocumentoFinal = objVerDocumento2;
-                                                                        dtFechaFinal = dtFecha2;
+                                                                        foreach (var proyecto in searchResultsProyectoPorProveedor)
+                                                                        {
+                                                                            var pd_DocumentosRelacionadosAlProyecto = proyecto.Vault.PropertyDefOperations.GetPropertyDefIDByAlias("PD.Document");
+                                                                            var oPropertiesProyecto = proyecto.Properties;
+
+                                                                            var oListDocumentosProyecto = oPropertiesProyecto
+                                                                                .SearchForPropertyEx(pd_DocumentosRelacionadosAlProyecto, true)
+                                                                                .TypedValue
+                                                                                .GetValueAsLookups()
+                                                                                .ToObjVerExs(proyecto.Vault);
+
+                                                                            foreach (var documentoProyecto in oListDocumentosProyecto)
+                                                                            {
+                                                                                if (documento.ID == documentoProyecto.ObjVer.ID)
+                                                                                {
+                                                                                    // Insert la tabla de documentos caducados
+                                                                                    oQuery.InsertarDocumentosCaducados(
+                                                                                        sProveedor: nombreOTituloObjetoPadre.ToString(),
+                                                                                        iProveedorID: organizacion.ObjVer.ID,
+                                                                                        sProyecto: proyecto.Title,
+                                                                                        iProyectoID: proyecto.ID,
+                                                                                        sCategoria: "Documento Vencido",
+                                                                                        sTipoDocumento: "Documento Proveedor",
+                                                                                        sNombreDocumento: szNombreClaseDocumento,
+                                                                                        iDocumentoID: documento.ID,
+                                                                                        sVigencia: claseDocumento.VigenciaDocumentoProveedor,
+                                                                                        sPeriodo: sPeriodoDocumentoProveedor);
+                                                                                }
+                                                                                else
+                                                                                {
+                                                                                    // Enviar a la tabla de documentos faltantes
+                                                                                    oQuery.InsertarDocumentosFaltantesChecklist(
+                                                                                        bDelete,
+                                                                                        sProveedor: nombreOTituloObjetoPadre.ToString(),
+                                                                                        iProveedorID: organizacion.ObjVer.ID,
+                                                                                        sProyecto: proyecto.Title,
+                                                                                        iProyectoID: proyecto.ID,
+                                                                                        sCategoria: "Documento Faltante",
+                                                                                        sTipoDocumento: "Documento Proveedor",
+                                                                                        sNombreDocumento: szNombreClaseDocumento,
+                                                                                        iDocumentoID: 0,
+                                                                                        sVigencia: claseDocumento.VigenciaDocumentoProveedor,
+                                                                                        sPeriodo: sPeriodoDocumentoProveedor);
+                                                                                }
+                                                                            }
+                                                                        }
                                                                     }
                                                                     else
                                                                     {
-                                                                        sComparaFecha2 = "";
-                                                                        objVerDocumentoFinal = objVerDocumento1;
-                                                                        dtFechaFinal = dtFecha1;
+                                                                        // Insert
+                                                                        oQuery.InsertarDocumentosCaducados(
+                                                                            sProveedor: nombreOTituloObjetoPadre.ToString(),
+                                                                            iProveedorID: organizacion.ObjVer.ID,
+                                                                            sCategoria: "Documento Vencido",
+                                                                            sTipoDocumento: "Documento Proveedor",
+                                                                            sNombreDocumento: szNombreClaseDocumento,
+                                                                            iDocumentoID: documento.ID,
+                                                                            sVigencia: claseDocumento.VigenciaDocumentoProveedor,
+                                                                            sPeriodo: sPeriodoDocumentoProveedor);
                                                                     }
                                                                 }
-
-                                                                // Si solo hay un documento, se establece el ID de objeto, la fecha de documento y la vigencia
-                                                                // directamente en el metodo ""
-                                                                if (oDocumentosVigentesPorValidar.Count == 1)
-                                                                {                                                                   
-                                                                    objVerDocumentoFinal = objVerDocumento1;
-                                                                    dtFechaFinal = dtFecha1;
-                                                                }                                                                
                                                             }
+
+                                                            // Crear nuevo periodo a partir de fecha fin que se convierte en la nueva fecha inicio
+                                                            dtFechaInicioPeriodo = dtFechaFinPeriodo;
+                                                            dtFechaFinPeriodo = ObtenerRangoDePeriodoDelDocumento
+                                                            (
+                                                                dtFechaInicioPeriodo,
+                                                                claseDocumento.VigenciaDocumentoProveedor,
+                                                                1
+                                                            );
+
+                                                            sFechaFin = "";
+                                                            sFechaFin = dtFechaFinPeriodo.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture);
+
+                                                            iDateCompare = DateTime.Compare
+                                                            (
+                                                                Convert.ToDateTime(sFechaActual), // t1
+                                                                Convert.ToDateTime(sFechaFin)     // t2
+                                                            );
                                                         }
 
-                                                        // Se agrega a la lista el documento vigente
-                                                        oListaDocumentosVigentes.Add(objVerDocumentoFinal);
-
-                                                        // Activa la relacion de objetos
-                                                        bActivaRelacionDeDocumentosVigentes = true;
-                                                    }
-                                                }
-                                                else
-                                                {
-                                                    // Validar los documentos cuya vigencia es "No Aplica"                                                   
-                                                    List<ObjVerEx> sbDocumentosProveedorNoAplicaVigencia = new List<ObjVerEx>();
-                                                    sbDocumentosProveedorNoAplicaVigencia = searchBuilderDocumentosProveedor.FindEx();
-
-                                                    // Agregar a lista de documentos vigentes
-                                                    oListaDocumentosVigentes.Add(sbDocumentosProveedorNoAplicaVigencia[0].ObjVer);
-
-                                                    // Activa la relacion de objetos
-                                                    bActivaRelacionDeDocumentosVigentes = true;
-
-                                                    foreach (ObjVerEx documento in sbDocumentosProveedorNoAplicaVigencia)
-                                                    {
-                                                        // Agregar el estatus "Vigente" al documento
-                                                        ActualizarEstatusDocumento
-                                                        (
-                                                            "Documento",
-                                                            documento.ObjVer, 
-                                                            pd_EstatusDocumento,
-                                                            1,
-                                                            grupo.ConfigurationWorkflow.WorkflowDocumentoProveedor.WorkflowValidacionesDocProveedor.ID,
-                                                            grupo.ConfigurationWorkflow.WorkflowDocumentoProveedor.EstadoDocumentoVigenteProveedor.ID
-                                                        );
-                                                    }                                                    
-                                                }
-                                            }
-                                            else // No se encontro ningun documento de la clase validada
-                                            {
-                                                // Si no se encuentra ningun documento de la clase de documento buscada
-                                                // Se agrega la clase de documento en el correo para que se suba a la boveda
-                                                string ListaItems = LeerPlantilla(RutaLista);
-                                                sChecklistDocumentName += ListaItems.Replace("[Documento]", szNombreClaseDocumento);
-
-                                                var sPeriodoDocumentoFaltante = ObtenerPeriodoDeDocumentoFaltante
-                                                (
-                                                    claseDocumento.VigenciaDocumentoProveedor,
-                                                    dtFechaInicioPeriodo,
-                                                    dtFechaFinPeriodo
-                                                );
-
-                                                sPeriodoDocumentoProveedor = sPeriodoDocumentoFaltante; 
-
-                                                sPeriodoVencimientoDocumentoLO += sPeriodoDocumentoProveedor + "<br/>";
-
-                                                // Modificar formato de la fecha del periodo para enviarla a la BD
-                                                if (claseDocumento.VigenciaDocumentoProveedor == "Mensual" || 
-                                                    claseDocumento.VigenciaDocumentoProveedor == "Bimestral" ||
-                                                    claseDocumento.VigenciaDocumentoProveedor == "Trimestral" ||
-                                                    claseDocumento.VigenciaDocumentoProveedor == "Cuatrimestral" ||
-                                                    claseDocumento.VigenciaDocumentoProveedor == "Anual")
-                                                {
-                                                    sPeriodoDocumentoProveedor = dtFechaInicioPeriodo.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture);
-                                                }
-
-                                                if (claseDocumento.TipoDocumentoChecklist == "Documento checklist")
-                                                {
-                                                    if (bValidaDocumentoPorProyecto == true)
-                                                    {                                                        
-                                                        foreach (var proyecto in searchResultsProyectoPorProveedor)
+                                                        if (oDocumentosVigentesPorValidar.Count > 0)
                                                         {
-                                                            // Enviar la informacion del documento faltante a la BD
-                                                            oQuery.InsertarDocumentosFaltantesChecklist(
-                                                                bDelete,
-                                                                sProveedor: nombreOTituloObjetoPadre.ToString(),
-                                                                iProveedorID: organizacion.ObjVer.ID,
-                                                                sProyecto: proyecto.Title,
-                                                                iProyectoID: proyecto.ID,
-                                                                sCategoria: "Documento Faltante",
-                                                                sTipoDocumento: "Documento Proveedor",
-                                                                sNombreDocumento: szNombreClaseDocumento,
-                                                                iDocumentoID: 0,
-                                                                sVigencia: claseDocumento.VigenciaDocumentoProveedor,
-                                                                sPeriodo: sPeriodoDocumentoProveedor);
-                                                        }
-                                                    }
-                                                    else
-                                                    {
-                                                        // Enviar la informacion del documento faltante a la BD
-                                                        oQuery.InsertarDocumentosFaltantesChecklist(
-                                                            bDelete,
-                                                            sProveedor: nombreOTituloObjetoPadre.ToString(),
-                                                            iProveedorID: organizacion.ObjVer.ID,
-                                                            sCategoria: "Documento Faltante",
-                                                            sTipoDocumento: "Documento Proveedor",
-                                                            sNombreDocumento: szNombreClaseDocumento,
-                                                            iDocumentoID: 0,
-                                                            sVigencia: claseDocumento.VigenciaDocumentoProveedor,
-                                                            sPeriodo: sPeriodoDocumentoProveedor);
-                                                    }                                                    
-                                                }                                                
+                                                            var sComparaFecha1 = "";
+                                                            var sComparaFecha2 = "";
+                                                            var dtFecha1 = new DateTime();
+                                                            var dtFecha2 = new DateTime();
+                                                            var dtFechaFinal = new DateTime();
+                                                            var objVerDocumento1 = new ObjVer();
+                                                            var objVerDocumento2 = new ObjVer();
+                                                            var objVerDocumentoFinal = new ObjVer();
 
-                                                bNotification = true;
-                                                bConcatenateDocument = true;
-                                            }
-                                        }
-
-                                        if (bActivaRelacionDeDocumentosVigentes)
-                                        {                                           
-                                            // Relacion de documentos en la metadata del proveedor
-                                            RelacionaDocumentosVigentes(
-                                                grupo.MasRecientesDocumentosRelacionados.ID,
-                                                organizacion,
-                                                oListaDocumentosVigentes);
-                                        }
-
-                                        SysUtils.ReportInfoToEventLog("Validacion de proyecto con contrato asociado en el proveedor: " + organizacion.Title);
-                                        
-                                        // Validar que proyecto asociado al proveedor tenga asociado un contrato (firmado, vigente), de lo contrario crear issue
-                                        var ot_Proyecto = organizacion.Vault.ObjectTypeOperations.GetObjectTypeIDByAlias("MF.OT.Project");
-                                        var cl_Contrato = organizacion.Vault.ClassOperations.GetObjectClassIDByAlias("CL.Contrato");
-                                        var cl_ProyectoServicioEspecializado = organizacion.Vault.ClassOperations.GetObjectClassIDByAlias("CL.ProyectoServicioEspecializado");
-                                        var pd_Proveedor = organizacion.Vault.PropertyDefOperations.GetPropertyDefIDByAlias("MF.PD.Proveedor");
-                                        var pd_ProyectosRelacionados = organizacion.Vault.PropertyDefOperations.GetPropertyDefIDByAlias("MF.PD.Project");
-                                        var pd_EstatusProyectoServicioEspecializado = organizacion.Vault.PropertyDefOperations.GetPropertyDefIDByAlias("PD.EstatusProyectoServicioEspecializado");                                        
-                                        var pd_TipoContrato = organizacion.Vault.PropertyDefOperations.GetPropertyDefIDByAlias("PD.TipoDeContrato");
-                                        var wf_CicloVidaContrato = organizacion.Vault.WorkflowOperations.GetWorkflowIDByAlias("MF.WF.ContractLifecycle");
-                                        var wfs_Activo = organizacion.Vault.WorkflowOperations.GetWorkflowStateIDByAlias("M-Files.CLM.State.ContractLifecycle.Active");
-
-                                        var oLookupProveedor = new Lookup();
-                                        var oLookupsProveedor = new Lookups();
-
-                                        oLookupProveedor.Item = organizacion.ObjVer.ID;
-                                        oLookupsProveedor.Add(-1, oLookupProveedor);
-                                        
-                                        // Buscar proyectos relacionados al proveedor
-                                        var searchBuilderProyecto = new MFSearchBuilder(organizacion.Vault);
-                                        searchBuilderProyecto.Deleted(false);
-                                        searchBuilderProyecto.Class(cl_ProyectoServicioEspecializado);
-                                        searchBuilderProyecto.Property(pd_Proveedor, MFDataType.MFDatatypeMultiSelectLookup, oLookupsProveedor);
-                                        
-                                        var searchResultsProyecto = searchBuilderProyecto.FindEx();
-
-                                        if (searchResultsProyecto.Count > 0)
-                                        {
-                                            // Buscar contratos relacionados al proyecto
-                                            var searchBuilderContrato = new MFSearchBuilder(organizacion.Vault);
-                                            searchBuilderContrato.Deleted(false);
-                                            searchBuilderContrato.Class(cl_Contrato);
-                                            searchBuilderContrato.Property(pd_Proveedor, MFDataType.MFDatatypeMultiSelectLookup, oLookupsProveedor);
-                                            searchBuilderContrato.Property(pd_TipoContrato, MFDataType.MFDatatypeLookup, 2);
-                                            searchBuilderContrato.Property
-                                            (
-                                                MFBuiltInPropertyDef.MFBuiltInPropertyDefWorkflow,
-                                                MFDataType.MFDatatypeLookup,
-                                                wf_CicloVidaContrato
-                                            );
-                                            searchBuilderContrato.Property
-                                            (
-                                                MFBuiltInPropertyDef.MFBuiltInPropertyDefState,
-                                                MFDataType.MFDatatypeLookup,
-                                                wfs_Activo
-                                            );
-
-                                            var searchResultsContrato = searchBuilderContrato.FindEx();
-
-                                            foreach (var proyecto in searchResultsProyecto)
-                                            {
-                                                SysUtils.ReportInfoToEventLog("Proyecto validado: " + proyecto.Title);
-
-                                                if (searchResultsContrato.Count > 0)
-                                                {
-                                                    // Agregar propiedad de estatus de proyecto se y establecer el estatus: Con Contrato Asociado
-                                                    var oLookup = new Lookup();
-                                                    var oObjID = new ObjID();
-
-                                                    oObjID.SetIDs
-                                                    (
-                                                        ObjType: ot_Proyecto,
-                                                        ID: proyecto.ObjVer.ID
-                                                    );
-
-                                                    var checkedOutObjectVersion = proyecto.Vault.ObjectOperations.CheckOut(oObjID);
-
-                                                    var oPropertyValue = new PropertyValue
-                                                    {
-                                                        PropertyDef = pd_EstatusProyectoServicioEspecializado
-                                                    };
-
-                                                    oLookup.Item = 5;
-
-                                                    oPropertyValue.TypedValue.SetValueToLookup(oLookup);
-
-                                                    proyecto.Vault.ObjectPropertyOperations.SetProperty
-                                                    (
-                                                        ObjVer: checkedOutObjectVersion.ObjVer,
-                                                        PropertyValue: oPropertyValue
-                                                    );
-
-                                                    proyecto.Vault.ObjectOperations.CheckIn(checkedOutObjectVersion.ObjVer);
-
-                                                    // Relacionar proyecto y contrato ?
-                                                    SysUtils.ReportInfoToEventLog("Proyecto con contrato asociado");
-                                                }
-                                                else
-                                                {
-                                                    // Agregar propiedad de estatus de proyecto se y establecer el estatus: Sin Contrato Asociado
-                                                    var oLookup = new Lookup();
-                                                    var oObjID = new ObjID();
-
-                                                    oObjID.SetIDs
-                                                    (
-                                                        ObjType: ot_Proyecto,
-                                                        ID: proyecto.ObjVer.ID
-                                                    );
-
-                                                    var checkedOutObjectVersion = proyecto.Vault.ObjectOperations.CheckOut(oObjID);
-
-                                                    var oPropertyValue = new PropertyValue
-                                                    {
-                                                        PropertyDef = pd_EstatusProyectoServicioEspecializado
-                                                    };
-
-                                                    oLookup.Item = 6;
-
-                                                    oPropertyValue.TypedValue.SetValueToLookup(oLookup);
-
-                                                    proyecto.Vault.ObjectPropertyOperations.SetProperty
-                                                    (
-                                                        ObjVer: checkedOutObjectVersion.ObjVer,
-                                                        PropertyValue: oPropertyValue
-                                                    );
-
-                                                    proyecto.Vault.ObjectOperations.CheckIn(checkedOutObjectVersion.ObjVer);
-
-                                                    // Crear issue
-                                                    CreateIssue(organizacion, proyecto);
-
-                                                    SysUtils.ReportInfoToEventLog("Proyecto sin contrato asociado");
-                                                }
-                                            }                                           
-                                        }
-
-                                        // Busqueda Contacto Externo Servicio Especializado
-                                        // Filtros: Nombre de proveedor, estatus
-                                        var sbContactosExternosSE = new MFSearchBuilder(PermanentVault);
-                                        sbContactosExternosSE.Deleted(false);
-                                        sbContactosExternosSE.ObjType(ot_ContactoExternoSE);
-                                        sbContactosExternosSE.Property
-                                        (
-                                            grupo.PropertyDefProveedorSEDocumentos, // Owner (Proveedor SE) - ID: 1730
-                                            MFDataType.MFDatatypeMultiSelectLookup,
-                                            oLookupsProveedor // organizacion.ObjVer.ID
-                                        );
-                                        sbContactosExternosSE.PropertyNot
-                                        (
-                                            pd_EstatusContactoExternoSE,
-                                            MFDataType.MFDatatypeLookup,
-                                            3 // Inactivo
-                                        );
-
-                                        var noContactos = sbContactosExternosSE.FindEx().Count;
-                                        SysUtils.ReportInfoToEventLog("Contactos: " + noContactos);
-
-                                        foreach (var contactoExterno in sbContactosExternosSE.FindEx())
-                                        {
-                                            bDelete = false;
-
-                                            List<ObjVer> oListaDeDocumentosPorEmpleado = new List<ObjVer>();
-                                            //bool bActivaActualizacionEstatusContactoExterno = false;
-                                            var NombreContactoExterno = "";
-                                            string sDocumentosContatenados = "";
-                                            string sPeriodoSolicitadoDeDocumento = "";
-                                            bool bActivaConcatenarContactoExterno = false;
-
-                                            foreach (var claseEmpleadoLO in grupo.DocumentosEmpleado)
-                                            {
-
-                                                if (claseEmpleadoLO.TipoValidacion == "Por empleado")
-                                                {
-                                                    var sComparaFecha1 = "";
-                                                    var sComparaFecha2 = "";
-                                                    var dtFecha1 = new DateTime();
-                                                    var dtFecha2 = new DateTime();
-                                                    var dtFechaFinal = new DateTime();
-                                                    var objVerDocumento1 = new ObjVer();
-                                                    var objVerDocumento2 = new ObjVer();
-                                                    var objVerDocumentoFinal = new ObjVer();
-                                                    var vigenciaDocumentoCD = "";
-                                                    bool bInicializarMetodoValidaVigenciaDocumentoCD = false;
-                                                    string szNombreClaseDocumento = "";
-
-                                                    //iNumeroMaxDocumentosLO = grupo.DocumentosProveedor.Count();
-
-                                                    var searchBuilderDocumentosEmpleado = new MFSearchBuilder(PermanentVault);
-                                                    searchBuilderDocumentosEmpleado.Deleted(false);
-                                                    searchBuilderDocumentosEmpleado.Property
-                                                    (
-                                                        (int)MFBuiltInPropertyDef.MFBuiltInPropertyDefClass,
-                                                        MFDataType.MFDatatypeLookup,
-                                                        claseEmpleadoLO.DocumentoEmpleado.ID
-                                                    );
-                                                    searchBuilderDocumentosEmpleado.Property
-                                                    (
-                                                        grupo.EmpleadoContactoExterno,
-                                                        MFDataType.MFDatatypeMultiSelectLookup,
-                                                        contactoExterno.ObjVer.ID
-                                                    );
-                                                    searchBuilderDocumentosEmpleado.Property
-                                                    (
-                                                        grupo.PropertyDefProveedorSEDocumentos,
-                                                        MFDataType.MFDatatypeMultiSelectLookup,
-                                                        organizacion.ObjVer.ID
-                                                    );
-                                                    searchBuilderDocumentosEmpleado.Property
-                                                    (
-                                                        MFBuiltInPropertyDef.MFBuiltInPropertyDefWorkflow,
-                                                        MFDataType.MFDatatypeLookup,
-                                                        grupo.ConfigurationWorkflow.WorkflowChecklist.WorkflowValidacionesChecklist.ID
-                                                    );
-                                                    searchBuilderDocumentosEmpleado.Property
-                                                    (
-                                                        MFBuiltInPropertyDef.MFBuiltInPropertyDefState,
-                                                        MFDataType.MFDatatypeLookup,
-                                                        grupo.ConfigurationWorkflow.WorkflowChecklist.EstadoDocumentoProcesado.ID
-                                                    );
-
-                                                    if (searchBuilderDocumentosEmpleado.FindEx().Count > 0) // Se encontro al menos un documento
-                                                    {
-                                                        foreach (var documentoCD in searchBuilderDocumentosEmpleado.FindEx())
-                                                        {
-                                                            oListaTodosLosDocumentosLO.Add(documentoCD.ObjVer);
-
-                                                            oPropertyValues = PermanentVault
-                                                                .ObjectPropertyOperations
-                                                                .GetProperties(documentoCD.ObjVer);
-
-                                                            ObjectClass oObjectClass = PermanentVault
-                                                                .ClassOperations
-                                                                .GetObjectClass(claseEmpleadoLO.DocumentoEmpleado.ID);
-
-                                                            szNombreClaseDocumento = oObjectClass.Name;
-
-                                                            if (oPropertyValues.IndexOf(grupo.Vigencia) != -1 &&
-                                                                        !oPropertyValues.SearchForPropertyEx(grupo.Vigencia, true).TypedValue.IsNULL())
+                                                            // Obtener el documento mas recientes de los encontrados
+                                                            foreach (ObjVer documento in oDocumentosVigentesPorValidar)
                                                             {
-                                                                if (oPropertyValues.IndexOf(grupo.FechaDeDocumento) != -1 &&
-                                                                    !oPropertyValues.SearchForPropertyEx(grupo.FechaDeDocumento, true).TypedValue.IsNULL())
+                                                                oListaTodosLosDocumentosLO.Add(documento);
+
+                                                                oPropertyValues = PermanentVault
+                                                                    .ObjectPropertyOperations
+                                                                    .GetProperties(documento);
+
+                                                                if (oPropertyValues.IndexOf(pd_EstatusDocumento) != -1)
                                                                 {
-                                                                    var fechaEmisionDocumentoCD = oPropertyValues
-                                                                        .SearchForPropertyEx(grupo.FechaDeDocumento, true)
-                                                                        .TypedValue
-                                                                        .Value;
+                                                                    var oFechaDocumento = oPropertyValues
+                                                                    .SearchForPropertyEx(grupo.FechaDeDocumento, true)
+                                                                    .TypedValue
+                                                                    .Value;
 
                                                                     // Comparar fecha de documentos (misma clase de documento) encontrados
                                                                     // Obtener el documento mas reciente y vigente
                                                                     if (sComparaFecha1 == "")
                                                                     {
-                                                                        dtFecha1 = Convert.ToDateTime(fechaEmisionDocumentoCD);
+                                                                        dtFecha1 = Convert.ToDateTime(oFechaDocumento);
                                                                         sComparaFecha1 = dtFecha1.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture);
-                                                                        objVerDocumento1 = documentoCD.ObjVer;
+                                                                        objVerDocumento1 = documento;
                                                                     }
                                                                     else
                                                                     {
-                                                                        dtFecha2 = Convert.ToDateTime(fechaEmisionDocumentoCD);
+                                                                        dtFecha2 = Convert.ToDateTime(oFechaDocumento);
                                                                         sComparaFecha2 = dtFecha2.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture);
-                                                                        objVerDocumento2 = documentoCD.ObjVer;
+                                                                        objVerDocumento2 = documento;
                                                                     }
 
                                                                     if (sComparaFecha1 != "" && sComparaFecha2 != "")
@@ -1045,91 +649,506 @@ namespace Arkiva.MonitorFiscal.Checklist
                                                                             objVerDocumentoFinal = objVerDocumento1;
                                                                             dtFechaFinal = dtFecha1;
                                                                         }
-
-                                                                        bInicializarMetodoValidaVigenciaDocumentoCD = true;
                                                                     }
 
                                                                     // Si solo hay un documento, se establece el ID de objeto, la fecha de documento y la vigencia
                                                                     // directamente en el metodo ""
-                                                                    if (searchBuilderDocumentosEmpleado.FindEx().Count == 1)
+                                                                    if (oDocumentosVigentesPorValidar.Count == 1)
                                                                     {
                                                                         objVerDocumentoFinal = objVerDocumento1;
                                                                         dtFechaFinal = dtFecha1;
-                                                                        bInicializarMetodoValidaVigenciaDocumentoCD = true;
                                                                     }
                                                                 }
                                                             }
+
+                                                            // Se agrega a la lista el documento vigente
+                                                            oListaDocumentosVigentes.Add(objVerDocumentoFinal);
+
+                                                            // Activa la relacion de objetos
+                                                            bActivaRelacionDeDocumentosVigentes = true;
                                                         }
+                                                    }
+                                                    else
+                                                    {
+                                                        // Validar los documentos cuya vigencia es "No Aplica"                                                   
+                                                        List<ObjVerEx> sbDocumentosProveedorNoAplicaVigencia = new List<ObjVerEx>();
+                                                        sbDocumentosProveedorNoAplicaVigencia = searchBuilderDocumentosProveedor.FindEx();
 
-                                                        if (bInicializarMetodoValidaVigenciaDocumentoCD)
+                                                        // Agregar a lista de documentos vigentes
+                                                        oListaDocumentosVigentes.Add(sbDocumentosProveedorNoAplicaVigencia[0].ObjVer);
+
+                                                        // Activa la relacion de objetos
+                                                        bActivaRelacionDeDocumentosVigentes = true;
+
+                                                        foreach (ObjVerEx documento in sbDocumentosProveedorNoAplicaVigencia)
                                                         {
-                                                            // Obtener Vigencia de la clase verificada como la mas actual y vigente
-                                                            var oPropertyValuesVigencia = new PropertyValues();
+                                                            // Agregar el estatus "Vigente" al documento
+                                                            ActualizarEstatusDocumento
+                                                            (
+                                                                "Documento",
+                                                                documento.ObjVer,
+                                                                pd_EstatusDocumento,
+                                                                1,
+                                                                grupo.ConfigurationWorkflow.WorkflowDocumentoProveedor.WorkflowValidacionesDocProveedor.ID,
+                                                                grupo.ConfigurationWorkflow.WorkflowDocumentoProveedor.EstadoDocumentoVigenteProveedor.ID
+                                                            );
+                                                        }
+                                                    }
+                                                }
+                                                else // No se encontro ningun documento de la clase validada
+                                                {
+                                                    // Si no se encuentra ningun documento de la clase de documento buscada
+                                                    // Se agrega la clase de documento en el correo para que se suba a la boveda
+                                                    string ListaItems = LeerPlantilla(RutaLista);
+                                                    sChecklistDocumentName += ListaItems.Replace("[Documento]", szNombreClaseDocumento);
 
-                                                            oPropertyValuesVigencia = PermanentVault
-                                                                .ObjectPropertyOperations
-                                                                .GetProperties(objVerDocumentoFinal);
+                                                    var sPeriodoDocumentoFaltante = ObtenerPeriodoDeDocumentoFaltante
+                                                    (
+                                                        claseDocumento.VigenciaDocumentoProveedor,
+                                                        dtFechaInicioPeriodo,
+                                                        dtFechaFinPeriodo
+                                                    );
 
-                                                            vigenciaDocumentoCD = oPropertyValuesVigencia
-                                                                .SearchForPropertyEx(grupo.Vigencia.ID, true)
-                                                                .TypedValue
-                                                                .GetValueAsLocalizedText();
+                                                    sPeriodoDocumentoProveedor = sPeriodoDocumentoFaltante;
 
-                                                            if (!(vigenciaDocumentoCD == "No Aplica")) // Valida vigencia de documento
+                                                    sPeriodoVencimientoDocumentoLO += sPeriodoDocumentoProveedor + "<br/>";
+
+                                                    // Modificar formato de la fecha del periodo para enviarla a la BD
+                                                    if (claseDocumento.VigenciaDocumentoProveedor == "Mensual" ||
+                                                        claseDocumento.VigenciaDocumentoProveedor == "Bimestral" ||
+                                                        claseDocumento.VigenciaDocumentoProveedor == "Trimestral" ||
+                                                        claseDocumento.VigenciaDocumentoProveedor == "Cuatrimestral" ||
+                                                        claseDocumento.VigenciaDocumentoProveedor == "Anual")
+                                                    {
+                                                        sPeriodoDocumentoProveedor = dtFechaInicioPeriodo.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture);
+                                                    }
+
+                                                    if (claseDocumento.TipoDocumentoChecklist == "Documento checklist")
+                                                    {
+                                                        if (bValidaDocumentoPorProyecto == true)
+                                                        {
+                                                            foreach (var proyecto in searchResultsProyectoPorProveedor)
                                                             {
-                                                                if (ValidarVigenciaDeDocumentoEnPeriodoActual(vigenciaDocumentoCD, dtFechaFinal) == false)
-                                                                {
-                                                                    string ListaItems = LeerPlantilla(RutaLista);
-                                                                    sChecklistDocumentName += ListaItems.Replace("[Documento]", szNombreClaseDocumento);
+                                                                // Enviar la informacion del documento faltante a la BD
+                                                                oQuery.InsertarDocumentosFaltantesChecklist(
+                                                                    bDelete,
+                                                                    sProveedor: nombreOTituloObjetoPadre.ToString(),
+                                                                    iProveedorID: organizacion.ObjVer.ID,
+                                                                    sProyecto: proyecto.Title,
+                                                                    iProyectoID: proyecto.ID,
+                                                                    sCategoria: "Documento Faltante",
+                                                                    sTipoDocumento: "Documento Proveedor",
+                                                                    sNombreDocumento: szNombreClaseDocumento,
+                                                                    iDocumentoID: 0,
+                                                                    sVigencia: claseDocumento.VigenciaDocumentoProveedor,
+                                                                    sPeriodo: sPeriodoDocumentoProveedor);
+                                                            }
+                                                        }
+                                                        else
+                                                        {
+                                                            // Enviar la informacion del documento faltante a la BD
+                                                            oQuery.InsertarDocumentosFaltantesChecklist(
+                                                                bDelete,
+                                                                sProveedor: nombreOTituloObjetoPadre.ToString(),
+                                                                iProveedorID: organizacion.ObjVer.ID,
+                                                                sCategoria: "Documento Faltante",
+                                                                sTipoDocumento: "Documento Proveedor",
+                                                                sNombreDocumento: szNombreClaseDocumento,
+                                                                iDocumentoID: 0,
+                                                                sVigencia: claseDocumento.VigenciaDocumentoProveedor,
+                                                                sPeriodo: sPeriodoDocumentoProveedor);
+                                                        }
+                                                    }
 
-                                                                    if (oPropertyValues.IndexOf(pd_EstatusDocumento) != -1)
+                                                    bNotification = true;
+                                                    bConcatenateDocument = true;
+                                                }
+                                            }
+
+                                            if (bActivaRelacionDeDocumentosVigentes)
+                                            {
+                                                // Relacion de documentos en la metadata del proveedor
+                                                RelacionaDocumentosVigentes(
+                                                    grupo.MasRecientesDocumentosRelacionados.ID,
+                                                    organizacion,
+                                                    oListaDocumentosVigentes);
+                                            }
+
+                                            SysUtils.ReportInfoToEventLog("Validacion de proyecto con contrato asociado en el proveedor: " + organizacion.Title);
+
+                                            // Validar que proyecto asociado al proveedor tenga asociado un contrato (firmado, vigente), de lo contrario crear issue
+                                            var ot_Proyecto = organizacion.Vault.ObjectTypeOperations.GetObjectTypeIDByAlias("MF.OT.Project");
+                                            var cl_Contrato = organizacion.Vault.ClassOperations.GetObjectClassIDByAlias("CL.Contrato");
+                                            var cl_ProyectoServicioEspecializado = organizacion.Vault.ClassOperations.GetObjectClassIDByAlias("CL.ProyectoServicioEspecializado");
+                                            var pd_Proveedor = organizacion.Vault.PropertyDefOperations.GetPropertyDefIDByAlias("MF.PD.Proveedor");
+                                            var pd_ProyectosRelacionados = organizacion.Vault.PropertyDefOperations.GetPropertyDefIDByAlias("MF.PD.Project");
+                                            var pd_EstatusProyectoServicioEspecializado = organizacion.Vault.PropertyDefOperations.GetPropertyDefIDByAlias("PD.EstatusProyectoServicioEspecializado");
+                                            var pd_TipoContrato = organizacion.Vault.PropertyDefOperations.GetPropertyDefIDByAlias("PD.TipoDeContrato");
+                                            var wf_CicloVidaContrato = organizacion.Vault.WorkflowOperations.GetWorkflowIDByAlias("MF.WF.ContractLifecycle");
+                                            var wfs_Activo = organizacion.Vault.WorkflowOperations.GetWorkflowStateIDByAlias("M-Files.CLM.State.ContractLifecycle.Active");
+
+                                            var oLookupProveedor = new Lookup();
+                                            var oLookupsProveedor = new Lookups();
+
+                                            oLookupProveedor.Item = organizacion.ObjVer.ID;
+                                            oLookupsProveedor.Add(-1, oLookupProveedor);
+
+                                            // Buscar proyectos relacionados al proveedor
+                                            var searchBuilderProyecto = new MFSearchBuilder(organizacion.Vault);
+                                            searchBuilderProyecto.Deleted(false);
+                                            searchBuilderProyecto.Class(cl_ProyectoServicioEspecializado);
+                                            searchBuilderProyecto.Property(pd_Proveedor, MFDataType.MFDatatypeMultiSelectLookup, oLookupsProveedor);
+
+                                            var searchResultsProyecto = searchBuilderProyecto.FindEx();
+
+                                            if (searchResultsProyecto.Count > 0)
+                                            {
+                                                // Buscar contratos relacionados al proyecto
+                                                var searchBuilderContrato = new MFSearchBuilder(organizacion.Vault);
+                                                searchBuilderContrato.Deleted(false);
+                                                searchBuilderContrato.Class(cl_Contrato);
+                                                searchBuilderContrato.Property(pd_Proveedor, MFDataType.MFDatatypeMultiSelectLookup, oLookupsProveedor);
+                                                searchBuilderContrato.Property(pd_TipoContrato, MFDataType.MFDatatypeLookup, 2);
+                                                searchBuilderContrato.Property
+                                                (
+                                                    MFBuiltInPropertyDef.MFBuiltInPropertyDefWorkflow,
+                                                    MFDataType.MFDatatypeLookup,
+                                                    wf_CicloVidaContrato
+                                                );
+                                                searchBuilderContrato.Property
+                                                (
+                                                    MFBuiltInPropertyDef.MFBuiltInPropertyDefState,
+                                                    MFDataType.MFDatatypeLookup,
+                                                    wfs_Activo
+                                                );
+
+                                                var searchResultsContrato = searchBuilderContrato.FindEx();
+
+                                                foreach (var proyecto in searchResultsProyecto)
+                                                {
+                                                    SysUtils.ReportInfoToEventLog("Proyecto validado: " + proyecto.Title);
+
+                                                    if (searchResultsContrato.Count > 0)
+                                                    {
+                                                        // Agregar propiedad de estatus de proyecto se y establecer el estatus: Con Contrato Asociado
+                                                        var oLookup = new Lookup();
+                                                        var oObjID = new ObjID();
+
+                                                        oObjID.SetIDs
+                                                        (
+                                                            ObjType: ot_Proyecto,
+                                                            ID: proyecto.ObjVer.ID
+                                                        );
+
+                                                        var checkedOutObjectVersion = proyecto.Vault.ObjectOperations.CheckOut(oObjID);
+
+                                                        var oPropertyValue = new PropertyValue
+                                                        {
+                                                            PropertyDef = pd_EstatusProyectoServicioEspecializado
+                                                        };
+
+                                                        oLookup.Item = 5;
+
+                                                        oPropertyValue.TypedValue.SetValueToLookup(oLookup);
+
+                                                        proyecto.Vault.ObjectPropertyOperations.SetProperty
+                                                        (
+                                                            ObjVer: checkedOutObjectVersion.ObjVer,
+                                                            PropertyValue: oPropertyValue
+                                                        );
+
+                                                        proyecto.Vault.ObjectOperations.CheckIn(checkedOutObjectVersion.ObjVer);
+
+                                                        // Relacionar proyecto y contrato ?
+                                                        SysUtils.ReportInfoToEventLog("Proyecto con contrato asociado");
+                                                    }
+                                                    else
+                                                    {
+                                                        // Agregar propiedad de estatus de proyecto se y establecer el estatus: Sin Contrato Asociado
+                                                        var oLookup = new Lookup();
+                                                        var oObjID = new ObjID();
+
+                                                        oObjID.SetIDs
+                                                        (
+                                                            ObjType: ot_Proyecto,
+                                                            ID: proyecto.ObjVer.ID
+                                                        );
+
+                                                        var checkedOutObjectVersion = proyecto.Vault.ObjectOperations.CheckOut(oObjID);
+
+                                                        var oPropertyValue = new PropertyValue
+                                                        {
+                                                            PropertyDef = pd_EstatusProyectoServicioEspecializado
+                                                        };
+
+                                                        oLookup.Item = 6;
+
+                                                        oPropertyValue.TypedValue.SetValueToLookup(oLookup);
+
+                                                        proyecto.Vault.ObjectPropertyOperations.SetProperty
+                                                        (
+                                                            ObjVer: checkedOutObjectVersion.ObjVer,
+                                                            PropertyValue: oPropertyValue
+                                                        );
+
+                                                        proyecto.Vault.ObjectOperations.CheckIn(checkedOutObjectVersion.ObjVer);
+
+                                                        // Crear issue
+                                                        CreateIssue(organizacion, proyecto);
+
+                                                        SysUtils.ReportInfoToEventLog("Proyecto sin contrato asociado");
+                                                    }
+                                                }
+                                            }
+
+                                            // Busqueda Contacto Externo Servicio Especializado
+                                            // Filtros: Nombre de proveedor, estatus
+                                            var sbContactosExternosSE = new MFSearchBuilder(PermanentVault);
+                                            sbContactosExternosSE.Deleted(false);
+                                            sbContactosExternosSE.ObjType(ot_ContactoExternoSE);
+                                            sbContactosExternosSE.Property
+                                            (
+                                                grupo.PropertyDefProveedorSEDocumentos, // Owner (Proveedor SE) - ID: 1730
+                                                MFDataType.MFDatatypeMultiSelectLookup,
+                                                oLookupsProveedor // organizacion.ObjVer.ID
+                                            );
+                                            sbContactosExternosSE.PropertyNot
+                                            (
+                                                pd_EstatusContactoExternoSE,
+                                                MFDataType.MFDatatypeLookup,
+                                                3 // Inactivo
+                                            );
+
+                                            var noContactos = sbContactosExternosSE.FindEx().Count;
+                                            SysUtils.ReportInfoToEventLog("Contactos: " + noContactos);
+
+                                            foreach (var contactoExterno in sbContactosExternosSE.FindEx())
+                                            {
+                                                bDelete = false;
+
+                                                List<ObjVer> oListaDeDocumentosPorEmpleado = new List<ObjVer>();
+                                                //bool bActivaActualizacionEstatusContactoExterno = false;
+                                                var NombreContactoExterno = "";
+                                                string sDocumentosContatenados = "";
+                                                string sPeriodoSolicitadoDeDocumento = "";
+                                                bool bActivaConcatenarContactoExterno = false;
+
+                                                foreach (var claseEmpleadoLO in grupo.DocumentosEmpleado)
+                                                {
+
+                                                    if (claseEmpleadoLO.TipoValidacion == "Por empleado")
+                                                    {
+                                                        var sComparaFecha1 = "";
+                                                        var sComparaFecha2 = "";
+                                                        var dtFecha1 = new DateTime();
+                                                        var dtFecha2 = new DateTime();
+                                                        var dtFechaFinal = new DateTime();
+                                                        var objVerDocumento1 = new ObjVer();
+                                                        var objVerDocumento2 = new ObjVer();
+                                                        var objVerDocumentoFinal = new ObjVer();
+                                                        var vigenciaDocumentoCD = "";
+                                                        bool bInicializarMetodoValidaVigenciaDocumentoCD = false;
+                                                        string szNombreClaseDocumento = "";
+
+                                                        //iNumeroMaxDocumentosLO = grupo.DocumentosProveedor.Count();
+
+                                                        var searchBuilderDocumentosEmpleado = new MFSearchBuilder(PermanentVault);
+                                                        searchBuilderDocumentosEmpleado.Deleted(false);
+                                                        searchBuilderDocumentosEmpleado.Property
+                                                        (
+                                                            (int)MFBuiltInPropertyDef.MFBuiltInPropertyDefClass,
+                                                            MFDataType.MFDatatypeLookup,
+                                                            claseEmpleadoLO.DocumentoEmpleado.ID
+                                                        );
+                                                        searchBuilderDocumentosEmpleado.Property
+                                                        (
+                                                            grupo.EmpleadoContactoExterno,
+                                                            MFDataType.MFDatatypeMultiSelectLookup,
+                                                            contactoExterno.ObjVer.ID
+                                                        );
+                                                        searchBuilderDocumentosEmpleado.Property
+                                                        (
+                                                            grupo.PropertyDefProveedorSEDocumentos,
+                                                            MFDataType.MFDatatypeMultiSelectLookup,
+                                                            organizacion.ObjVer.ID
+                                                        );
+                                                        searchBuilderDocumentosEmpleado.Property
+                                                        (
+                                                            MFBuiltInPropertyDef.MFBuiltInPropertyDefWorkflow,
+                                                            MFDataType.MFDatatypeLookup,
+                                                            grupo.ConfigurationWorkflow.WorkflowChecklist.WorkflowValidacionesChecklist.ID
+                                                        );
+                                                        searchBuilderDocumentosEmpleado.Property
+                                                        (
+                                                            MFBuiltInPropertyDef.MFBuiltInPropertyDefState,
+                                                            MFDataType.MFDatatypeLookup,
+                                                            grupo.ConfigurationWorkflow.WorkflowChecklist.EstadoDocumentoProcesado.ID
+                                                        );
+
+                                                        if (searchBuilderDocumentosEmpleado.FindEx().Count > 0) // Se encontro al menos un documento
+                                                        {
+                                                            foreach (var documentoCD in searchBuilderDocumentosEmpleado.FindEx())
+                                                            {
+                                                                oListaTodosLosDocumentosLO.Add(documentoCD.ObjVer);
+
+                                                                oPropertyValues = PermanentVault
+                                                                    .ObjectPropertyOperations
+                                                                    .GetProperties(documentoCD.ObjVer);
+
+                                                                ObjectClass oObjectClass = PermanentVault
+                                                                    .ClassOperations
+                                                                    .GetObjectClass(claseEmpleadoLO.DocumentoEmpleado.ID);
+
+                                                                szNombreClaseDocumento = oObjectClass.Name;
+
+                                                                if (oPropertyValues.IndexOf(grupo.Vigencia) != -1 &&
+                                                                            !oPropertyValues.SearchForPropertyEx(grupo.Vigencia, true).TypedValue.IsNULL())
+                                                                {
+                                                                    if (oPropertyValues.IndexOf(grupo.FechaDeDocumento) != -1 &&
+                                                                        !oPropertyValues.SearchForPropertyEx(grupo.FechaDeDocumento, true).TypedValue.IsNULL())
                                                                     {
-                                                                        // Se modifica el estatus del documento a vencido
+                                                                        var fechaEmisionDocumentoCD = oPropertyValues
+                                                                            .SearchForPropertyEx(grupo.FechaDeDocumento, true)
+                                                                            .TypedValue
+                                                                            .Value;
+
+                                                                        // Comparar fecha de documentos (misma clase de documento) encontrados
+                                                                        // Obtener el documento mas reciente y vigente
+                                                                        if (sComparaFecha1 == "")
+                                                                        {
+                                                                            dtFecha1 = Convert.ToDateTime(fechaEmisionDocumentoCD);
+                                                                            sComparaFecha1 = dtFecha1.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture);
+                                                                            objVerDocumento1 = documentoCD.ObjVer;
+                                                                        }
+                                                                        else
+                                                                        {
+                                                                            dtFecha2 = Convert.ToDateTime(fechaEmisionDocumentoCD);
+                                                                            sComparaFecha2 = dtFecha2.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture);
+                                                                            objVerDocumento2 = documentoCD.ObjVer;
+                                                                        }
+
+                                                                        if (sComparaFecha1 != "" && sComparaFecha2 != "")
+                                                                        {
+                                                                            int iComparaFechasDeDocumentoChecklist = DateTime.Compare
+                                                                            (
+                                                                                Convert.ToDateTime(sComparaFecha1),
+                                                                                Convert.ToDateTime(sComparaFecha2)
+                                                                            );
+
+                                                                            if (iComparaFechasDeDocumentoChecklist < 0)
+                                                                            {
+                                                                                sComparaFecha1 = "";
+                                                                                objVerDocumentoFinal = objVerDocumento2;
+                                                                                dtFechaFinal = dtFecha2;
+                                                                            }
+                                                                            else
+                                                                            {
+                                                                                sComparaFecha2 = "";
+                                                                                objVerDocumentoFinal = objVerDocumento1;
+                                                                                dtFechaFinal = dtFecha1;
+                                                                            }
+
+                                                                            bInicializarMetodoValidaVigenciaDocumentoCD = true;
+                                                                        }
+
+                                                                        // Si solo hay un documento, se establece el ID de objeto, la fecha de documento y la vigencia
+                                                                        // directamente en el metodo ""
+                                                                        if (searchBuilderDocumentosEmpleado.FindEx().Count == 1)
+                                                                        {
+                                                                            objVerDocumentoFinal = objVerDocumento1;
+                                                                            dtFechaFinal = dtFecha1;
+                                                                            bInicializarMetodoValidaVigenciaDocumentoCD = true;
+                                                                        }
+                                                                    }
+                                                                }
+                                                            }
+
+                                                            if (bInicializarMetodoValidaVigenciaDocumentoCD)
+                                                            {
+                                                                // Obtener Vigencia de la clase verificada como la mas actual y vigente
+                                                                var oPropertyValuesVigencia = new PropertyValues();
+
+                                                                oPropertyValuesVigencia = PermanentVault
+                                                                    .ObjectPropertyOperations
+                                                                    .GetProperties(objVerDocumentoFinal);
+
+                                                                vigenciaDocumentoCD = oPropertyValuesVigencia
+                                                                    .SearchForPropertyEx(grupo.Vigencia.ID, true)
+                                                                    .TypedValue
+                                                                    .GetValueAsLocalizedText();
+
+                                                                if (!(vigenciaDocumentoCD == "No Aplica")) // Valida vigencia de documento
+                                                                {
+                                                                    if (ValidarVigenciaDeDocumentoEnPeriodoActual(vigenciaDocumentoCD, dtFechaFinal) == false)
+                                                                    {
+                                                                        string ListaItems = LeerPlantilla(RutaLista);
+                                                                        sChecklistDocumentName += ListaItems.Replace("[Documento]", szNombreClaseDocumento);
+
+                                                                        if (oPropertyValues.IndexOf(pd_EstatusDocumento) != -1)
+                                                                        {
+                                                                            // Se modifica el estatus del documento a vencido
+                                                                            ActualizarEstatusDocumento
+                                                                            (
+                                                                                "Documento",
+                                                                                objVerDocumentoFinal,
+                                                                                pd_EstatusDocumento,
+                                                                                2,
+                                                                                grupo.ConfigurationWorkflow.WorkflowChecklist.WorkflowValidacionesChecklist.ID,
+                                                                                grupo.ConfigurationWorkflow.WorkflowChecklist.EstadoDocumentoVencido.ID
+                                                                            );
+                                                                        }
+
+                                                                        // Obtener periodo del documento LO (mes de vencimiento)
+                                                                        var PeriodoVencimientoDocumentoCD = ObtenerPeriodoDeVencimientoDelDocumento(dtFechaFinal, vigenciaDocumentoCD);
+
+                                                                        if (PeriodoVencimientoDocumentoCD != "")
+                                                                        {
+                                                                            sPeriodoVencimientoDocumentoLO += PeriodoVencimientoDocumentoCD + "<br/>";
+                                                                        }
+
+                                                                        // Insertar informacion de documento vencido
+                                                                        oQuery.InsertarDocumentosFaltantesChecklist(
+                                                                            bDelete,
+                                                                            sProveedor: nombreOTituloObjetoPadre.ToString(),
+                                                                            iProveedorID: organizacion.ObjVer.ID,
+                                                                            sEmpleado: contactoExterno.Title,
+                                                                            iEmpleadoID: contactoExterno.ObjVer.ID,
+                                                                            sCategoria: "Documento Vencido",
+                                                                            sTipoDocumento: "Documento Empleado",
+                                                                            sNombreDocumento: szNombreClaseDocumento,
+                                                                            iDocumentoID: claseEmpleadoLO.DocumentoEmpleado.ID,
+                                                                            sVigencia: vigenciaDocumentoCD,
+                                                                            sPeriodo: PeriodoVencimientoDocumentoCD);
+
+                                                                        bNotification = true;
+                                                                        bConcatenateDocument = true;
+
+                                                                        // Concatenar los documentos al contacto externo correspondiente
+                                                                        bActivaConcatenarContactoExterno = true;
+                                                                    }
+                                                                    else
+                                                                    {
+                                                                        // Se agrega a la lista el documento vigente
+                                                                        oListaDocumentosVigentes.Add(objVerDocumentoFinal);
+
+                                                                        // Activa la relacion de objetos
+                                                                        bActivaRelacionDeDocumentosVigentes = true;
+
+                                                                        // Actualizar el estatus "Vigente" al documento
                                                                         ActualizarEstatusDocumento
                                                                         (
                                                                             "Documento",
-                                                                            objVerDocumentoFinal, 
+                                                                            objVerDocumentoFinal,
                                                                             pd_EstatusDocumento,
-                                                                            2,
-                                                                            grupo.ConfigurationWorkflow.WorkflowChecklist.WorkflowValidacionesChecklist.ID,
-                                                                            grupo.ConfigurationWorkflow.WorkflowChecklist.EstadoDocumentoVencido.ID                                                                            
+                                                                            1,
+                                                                            grupo.ConfigurationWorkflow.WorkflowDocumentoEmpleado.WorkflowValidacionesDocEmpleado.ID,
+                                                                            grupo.ConfigurationWorkflow.WorkflowDocumentoEmpleado.EstadoDocumentoVigenteEmpleado.ID
                                                                         );
                                                                     }
-
-                                                                    // Obtener periodo del documento LO (mes de vencimiento)
-                                                                    var PeriodoVencimientoDocumentoCD = ObtenerPeriodoDeVencimientoDelDocumento(dtFechaFinal, vigenciaDocumentoCD);
-
-                                                                    if (PeriodoVencimientoDocumentoCD != "")
-                                                                    {
-                                                                        sPeriodoVencimientoDocumentoLO += PeriodoVencimientoDocumentoCD + "<br/>";
-                                                                    }
-
-                                                                    // Insertar informacion de documento vencido
-                                                                    oQuery.InsertarDocumentosFaltantesChecklist(
-                                                                        bDelete,
-                                                                        sProveedor: nombreOTituloObjetoPadre.ToString(),
-                                                                        iProveedorID: organizacion.ObjVer.ID,
-                                                                        sEmpleado: contactoExterno.Title,
-                                                                        iEmpleadoID: contactoExterno.ObjVer.ID,
-                                                                        sCategoria: "Documento Vencido",
-                                                                        sTipoDocumento: "Documento Empleado",
-                                                                        sNombreDocumento: szNombreClaseDocumento,
-                                                                        iDocumentoID: claseEmpleadoLO.DocumentoEmpleado.ID,
-                                                                        sVigencia: vigenciaDocumentoCD,
-                                                                        sPeriodo: PeriodoVencimientoDocumentoCD);
-
-                                                                    bNotification = true;
-                                                                    bConcatenateDocument = true;
-
-                                                                    // Concatenar los documentos al contacto externo correspondiente
-                                                                    bActivaConcatenarContactoExterno = true;
                                                                 }
-                                                                else
+                                                                else // Si el documento "No Aplica" validacion de vigencia
                                                                 {
-                                                                    // Se agrega a la lista el documento vigente
                                                                     oListaDocumentosVigentes.Add(objVerDocumentoFinal);
-
-                                                                    // Activa la relacion de objetos
                                                                     bActivaRelacionDeDocumentosVigentes = true;
 
                                                                     // Actualizar el estatus "Vigente" al documento
@@ -1144,43 +1163,42 @@ namespace Arkiva.MonitorFiscal.Checklist
                                                                     );
                                                                 }
                                                             }
-                                                            else // Si el documento "No Aplica" validacion de vigencia
-                                                            {
-                                                                oListaDocumentosVigentes.Add(objVerDocumentoFinal);
-                                                                bActivaRelacionDeDocumentosVigentes = true;
-
-                                                                // Actualizar el estatus "Vigente" al documento
-                                                                ActualizarEstatusDocumento
-                                                                (
-                                                                    "Documento",
-                                                                    objVerDocumentoFinal,
-                                                                    pd_EstatusDocumento,
-                                                                    1,
-                                                                    grupo.ConfigurationWorkflow.WorkflowDocumentoEmpleado.WorkflowValidacionesDocEmpleado.ID,
-                                                                    grupo.ConfigurationWorkflow.WorkflowDocumentoEmpleado.EstadoDocumentoVigenteEmpleado.ID
-                                                                );
-                                                            }
                                                         }
-                                                    }
-                                                    else
-                                                    {
-                                                        szNombreClaseDocumento = claseEmpleadoLO.NombreClaseDocumento;
-
-                                                        string ListaItemsEnviadosAEmpleado = LeerPlantilla(RutaListaEmpleado);
-                                                        sDocumentosEnviadosAEmpleado += ListaItemsEnviadosAEmpleado.Replace("[DocumentoEmpleado]", szNombreClaseDocumento);
-                                                        sPeriodosDeDocumentosEnviadosAEmpleado += "Faltante" + "<br/>";
-
-                                                        if (bValidaDocumentoPorProyecto == true)
+                                                        else
                                                         {
-                                                            foreach (var proyecto in searchResultsProyectoPorProveedor)
+                                                            szNombreClaseDocumento = claseEmpleadoLO.NombreClaseDocumento;
+
+                                                            string ListaItemsEnviadosAEmpleado = LeerPlantilla(RutaListaEmpleado);
+                                                            sDocumentosEnviadosAEmpleado += ListaItemsEnviadosAEmpleado.Replace("[DocumentoEmpleado]", szNombreClaseDocumento);
+                                                            sPeriodosDeDocumentosEnviadosAEmpleado += "Faltante" + "<br/>";
+
+                                                            if (bValidaDocumentoPorProyecto == true)
                                                             {
-                                                                // Enviar la informacion del documento faltante a la BD
+                                                                foreach (var proyecto in searchResultsProyectoPorProveedor)
+                                                                {
+                                                                    // Enviar la informacion del documento faltante a la BD
+                                                                    oQuery.InsertarDocumentosFaltantesChecklist(
+                                                                        bDelete,
+                                                                        sProveedor: nombreOTituloObjetoPadre.ToString(),
+                                                                        iProveedorID: organizacion.ObjVer.ID,
+                                                                        sProyecto: proyecto.Title,
+                                                                        iProyectoID: proyecto.ID,
+                                                                        sEmpleado: contactoExterno.Title,
+                                                                        iEmpleadoID: contactoExterno.ObjVer.ID,
+                                                                        sCategoria: "Documento Faltante",
+                                                                        sTipoDocumento: "Documento Empleado",
+                                                                        sNombreDocumento: szNombreClaseDocumento,
+                                                                        iDocumentoID: 0,
+                                                                        sPeriodo: "Faltante");
+                                                                }
+                                                            }
+                                                            else
+                                                            {
+                                                                // Insertar informacion de documento vencido
                                                                 oQuery.InsertarDocumentosFaltantesChecklist(
                                                                     bDelete,
                                                                     sProveedor: nombreOTituloObjetoPadre.ToString(),
                                                                     iProveedorID: organizacion.ObjVer.ID,
-                                                                    sProyecto: proyecto.Title,
-                                                                    iProyectoID: proyecto.ID,
                                                                     sEmpleado: contactoExterno.Title,
                                                                     iEmpleadoID: contactoExterno.ObjVer.ID,
                                                                     sCategoria: "Documento Faltante",
@@ -1189,309 +1207,199 @@ namespace Arkiva.MonitorFiscal.Checklist
                                                                     iDocumentoID: 0,
                                                                     sPeriodo: "Faltante");
                                                             }
-                                                        }
-                                                        else
-                                                        {
-                                                            // Insertar informacion de documento vencido
-                                                            oQuery.InsertarDocumentosFaltantesChecklist(
-                                                                bDelete,
-                                                                sProveedor: nombreOTituloObjetoPadre.ToString(),
-                                                                iProveedorID: organizacion.ObjVer.ID,
-                                                                sEmpleado: contactoExterno.Title,
-                                                                iEmpleadoID: contactoExterno.ObjVer.ID,
-                                                                sCategoria: "Documento Faltante",
-                                                                sTipoDocumento: "Documento Empleado",
-                                                                sNombreDocumento: szNombreClaseDocumento,
-                                                                iDocumentoID: 0,
-                                                                sPeriodo: "Faltante");
-                                                        }
 
-                                                        // Concatenar los documentos al contacto externo correspondiente
-                                                        bActivaConcatenarContactoExterno = true;
+                                                            // Concatenar los documentos al contacto externo correspondiente
+                                                            bActivaConcatenarContactoExterno = true;
+                                                        }
                                                     }
-                                                }                                                
 
-                                                if (claseEmpleadoLO.TipoValidacion == "Por frecuencia de pago")
-                                                {                                                    
-                                                    var sPeriodoDocumentoEmpleado = "";
-
-                                                    oPropertyValues = PermanentVault
-                                                        .ObjectPropertyOperations
-                                                        .GetProperties(contactoExterno.ObjVer);
-
-                                                    if (oPropertyValues.IndexOf(pd_FrecuenciaDePagoDeNomina) != -1)
+                                                    if (claseEmpleadoLO.TipoValidacion == "Por frecuencia de pago")
                                                     {
-                                                        if (!oPropertyValues.SearchForPropertyEx(pd_FrecuenciaDePagoDeNomina, true).TypedValue.IsNULL())
+                                                        var sPeriodoDocumentoEmpleado = "";
+
+                                                        oPropertyValues = PermanentVault
+                                                            .ObjectPropertyOperations
+                                                            .GetProperties(contactoExterno.ObjVer);
+
+                                                        if (oPropertyValues.IndexOf(pd_FrecuenciaDePagoDeNomina) != -1)
                                                         {
-                                                            var frecuenciaPagoNomina = oPropertyValues
-                                                                .SearchForPropertyEx(pd_FrecuenciaDePagoDeNomina, true)
-                                                                .TypedValue
-                                                                .GetValueAsLocalizedText();
-
-                                                            DateTime dtFechaInicioPeriodo = Convert.ToDateTime(fechaInicioProveedor);
-
-                                                            DateTime dtFechaFinPeriodo = ObtenerRangoDePeriodoDelDocumento
-                                                            (
-                                                                dtFechaInicioPeriodo,
-                                                                frecuenciaPagoNomina,
-                                                                1
-                                                            );
-
-                                                            // Validar fecha fin contra la fecha actual                                            
-                                                            string sFechaFin = dtFechaFinPeriodo.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture);
-
-                                                            int iDateCompare = DateTime.Compare
-                                                            (
-                                                                Convert.ToDateTime(sFechaActual), // t1
-                                                                Convert.ToDateTime(sFechaFin)     // t2
-                                                            );
-
-                                                            while (iDateCompare >= 0)
+                                                            if (!oPropertyValues.SearchForPropertyEx(pd_FrecuenciaDePagoDeNomina, true).TypedValue.IsNULL())
                                                             {
-                                                                List<ObjVer> oDocumentosVigentesPorValidar = new List<ObjVer>();
-                                                                List<ObjVer> oDocumentosVencidos = new List<ObjVer>();
+                                                                var frecuenciaPagoNomina = oPropertyValues
+                                                                    .SearchForPropertyEx(pd_FrecuenciaDePagoDeNomina, true)
+                                                                    .TypedValue
+                                                                    .GetValueAsLocalizedText();
 
-                                                                // Busqueda de documentos del empleado
-                                                                var sbDocumentosEmpleadosLO = new MFSearchBuilder(PermanentVault);
-                                                                sbDocumentosEmpleadosLO.Deleted(false);
-                                                                sbDocumentosEmpleadosLO.Property
+                                                                DateTime dtFechaInicioPeriodo = Convert.ToDateTime(fechaInicioProveedor);
+
+                                                                DateTime dtFechaFinPeriodo = ObtenerRangoDePeriodoDelDocumento
                                                                 (
-                                                                    grupo.EmpleadoContactoExterno,
-                                                                    MFDataType.MFDatatypeMultiSelectLookup,
-                                                                    contactoExterno.ObjVer.ID
-                                                                );
-                                                                sbDocumentosEmpleadosLO.Property
-                                                                (
-                                                                    (int)MFBuiltInPropertyDef.MFBuiltInPropertyDefClass,
-                                                                    MFDataType.MFDatatypeLookup,
-                                                                    claseEmpleadoLO.DocumentoEmpleado.ID
-                                                                );
-                                                                sbDocumentosEmpleadosLO.Property
-                                                                (
-                                                                    grupo.PropertyDefProveedorSEDocumentos,
-                                                                    MFDataType.MFDatatypeMultiSelectLookup,
-                                                                    organizacion.ObjVer.ID
-                                                                );
-                                                                sbDocumentosEmpleadosLO.Property
-                                                                (
-                                                                    MFBuiltInPropertyDef.MFBuiltInPropertyDefWorkflow,
-                                                                    MFDataType.MFDatatypeLookup,
-                                                                    grupo.ConfigurationWorkflow.WorkflowChecklist.WorkflowValidacionesChecklist.ID
-                                                                );
-                                                                sbDocumentosEmpleadosLO.Property
-                                                                (
-                                                                    MFBuiltInPropertyDef.MFBuiltInPropertyDefState,
-                                                                    MFDataType.MFDatatypeLookup,
-                                                                    grupo.ConfigurationWorkflow.WorkflowChecklist.EstadoDocumentoProcesado.ID
+                                                                    dtFechaInicioPeriodo,
+                                                                    frecuenciaPagoNomina,
+                                                                    1
                                                                 );
 
-                                                                var documentosCount = sbDocumentosEmpleadosLO.FindEx().Count;
-                                                                SysUtils.ReportInfoToEventLog("Documentos: " + documentosCount);
+                                                                // Validar fecha fin contra la fecha actual                                            
+                                                                string sFechaFin = dtFechaFinPeriodo.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture);
 
-                                                                if (sbDocumentosEmpleadosLO.FindEx().Count > 0) // Se encontro al menos un documento
+                                                                int iDateCompare = DateTime.Compare
+                                                                (
+                                                                    Convert.ToDateTime(sFechaActual), // t1
+                                                                    Convert.ToDateTime(sFechaFin)     // t2
+                                                                );
+
+                                                                while (iDateCompare >= 0)
                                                                 {
-                                                                    foreach (var documentoEmpleado in sbDocumentosEmpleadosLO.FindEx())
-                                                                    {
-                                                                        oPropertyValues = PermanentVault
-                                                                            .ObjectPropertyOperations
-                                                                            .GetProperties(documentoEmpleado.ObjVer);
+                                                                    List<ObjVer> oDocumentosVigentesPorValidar = new List<ObjVer>();
+                                                                    List<ObjVer> oDocumentosVencidos = new List<ObjVer>();
 
-                                                                        // Invocar fecha de pago de CFDI Nomina
-                                                                        var pd_FechaDePago = PermanentVault
-                                                                            .PropertyDefOperations
-                                                                            .GetPropertyDefIDByAlias("CFDI.FechaPago.Texto");
-
-                                                                        // Obtener fecha del documento
-                                                                        var oFechaDeDocumento = oPropertyValues
-                                                                            .SearchForPropertyEx(pd_FechaDePago, true)
-                                                                            .TypedValue
-                                                                            .Value;
-
-                                                                        DateTime dtFechaDeDocumento = Convert.ToDateTime(oFechaDeDocumento);
-
-                                                                        string sFechaDeDocumento = dtFechaDeDocumento.ToString("yyyy-MM-dd");
-
-                                                                        // Validar si la fecha del documento esta dentro del periodo obtenido
-                                                                        if (ComparaFechaBaseContraUnaFechaInicioYFechaFin(
-                                                                            sFechaDeDocumento,
-                                                                            dtFechaInicioPeriodo,
-                                                                            dtFechaFinPeriodo) == true)
-                                                                        {
-                                                                            oDocumentosVigentesPorValidar.Add(documentoEmpleado.ObjVer);                                                                            
-                                                                        }
-                                                                        else
-                                                                        {
-                                                                            oDocumentosVencidos.Add(documentoEmpleado.ObjVer);                                                                            
-                                                                        }
-
-                                                                        // Validar vigencia tomando como referencia el ultimo periodo
-                                                                        if (ValidarVigenciaDeDocumentoEnPeriodoActual(
-                                                                            frecuenciaPagoNomina,
-                                                                            dtFechaDeDocumento) == true)
-                                                                        {
-                                                                            // Actualizar el estatus "Vigente" al documento
-                                                                            ActualizarEstatusDocumento
-                                                                            (
-                                                                                "Documento",
-                                                                                documentoEmpleado.ObjVer,
-                                                                                pd_EstatusDocumento,
-                                                                                1,
-                                                                                grupo.ConfigurationWorkflow.WorkflowDocumentoEmpleado.WorkflowValidacionesDocEmpleado.ID,
-                                                                                grupo.ConfigurationWorkflow.WorkflowDocumentoEmpleado.EstadoDocumentoVigenteEmpleado.ID
-                                                                            );
-                                                                        }
-                                                                        else
-                                                                        {
-                                                                            // Agregar el estatus "Vencido" al documento
-                                                                            ActualizarEstatusDocumento
-                                                                            (
-                                                                                "Documento",
-                                                                                documentoEmpleado.ObjVer,
-                                                                                pd_EstatusDocumento,
-                                                                                2,
-                                                                                grupo.ConfigurationWorkflow.WorkflowChecklist.WorkflowValidacionesChecklist.ID,
-                                                                                grupo.ConfigurationWorkflow.WorkflowChecklist.EstadoDocumentoVencido.ID
-                                                                            );
-                                                                        }
-                                                                    }
-
-                                                                    // Fecha inicio y fin del periodo validado
-                                                                    var sPeriodoDocumentoFaltante = ObtenerPeriodoDeDocumentoFaltante
+                                                                    // Busqueda de documentos del empleado
+                                                                    var sbDocumentosEmpleadosLO = new MFSearchBuilder(PermanentVault);
+                                                                    sbDocumentosEmpleadosLO.Deleted(false);
+                                                                    sbDocumentosEmpleadosLO.Property
                                                                     (
-                                                                        frecuenciaPagoNomina,
-                                                                        dtFechaInicioPeriodo,
-                                                                        dtFechaFinPeriodo
+                                                                        grupo.EmpleadoContactoExterno,
+                                                                        MFDataType.MFDatatypeMultiSelectLookup,
+                                                                        contactoExterno.ObjVer.ID
+                                                                    );
+                                                                    sbDocumentosEmpleadosLO.Property
+                                                                    (
+                                                                        (int)MFBuiltInPropertyDef.MFBuiltInPropertyDefClass,
+                                                                        MFDataType.MFDatatypeLookup,
+                                                                        claseEmpleadoLO.DocumentoEmpleado.ID
+                                                                    );
+                                                                    sbDocumentosEmpleadosLO.Property
+                                                                    (
+                                                                        grupo.PropertyDefProveedorSEDocumentos,
+                                                                        MFDataType.MFDatatypeMultiSelectLookup,
+                                                                        organizacion.ObjVer.ID
+                                                                    );
+                                                                    sbDocumentosEmpleadosLO.Property
+                                                                    (
+                                                                        MFBuiltInPropertyDef.MFBuiltInPropertyDefWorkflow,
+                                                                        MFDataType.MFDatatypeLookup,
+                                                                        grupo.ConfigurationWorkflow.WorkflowChecklist.WorkflowValidacionesChecklist.ID
+                                                                    );
+                                                                    sbDocumentosEmpleadosLO.Property
+                                                                    (
+                                                                        MFBuiltInPropertyDef.MFBuiltInPropertyDefState,
+                                                                        MFDataType.MFDatatypeLookup,
+                                                                        grupo.ConfigurationWorkflow.WorkflowChecklist.EstadoDocumentoProcesado.ID
                                                                     );
 
-                                                                    if (oDocumentosVigentesPorValidar.Count > 0)
+                                                                    var documentosCount = sbDocumentosEmpleadosLO.FindEx().Count;
+                                                                    SysUtils.ReportInfoToEventLog("Documentos: " + documentosCount);
+
+                                                                    if (sbDocumentosEmpleadosLO.FindEx().Count > 0) // Se encontro al menos un documento
                                                                     {
-                                                                        // Agregar a la lista, el documento encontrado
-                                                                        oListaDeDocumentosPorEmpleado.Add(oDocumentosVigentesPorValidar[0]);
-
-                                                                        // Actualizar el estatus del Contacto Externo
-                                                                        ActualizarEstatusDocumento
-                                                                        (
-                                                                            "Contacto Externo", 
-                                                                            contactoExterno.ObjVer, 
-                                                                            pd_EstatusContactoExternoSE, 
-                                                                            2, 0, 0,
-                                                                            ot_ContactoExternoSE
-                                                                        );
-                                                                    }
-                                                                    else
-                                                                    {
-                                                                        // Se agrega al correo el nombre del documento no encontrado
-                                                                        // en el periodo validado
-                                                                        string ListaItemsEmpleado = LeerPlantilla(RutaListaEmpleado);
-                                                                        sDocumentosContatenados += ListaItemsEmpleado.Replace("[DocumentoEmpleado]", claseEmpleadoLO.NombreClaseDocumento);                                                                                                                                               
-
-                                                                        sPeriodoDocumentoEmpleado = sPeriodoDocumentoFaltante;
-
-                                                                        sPeriodoSolicitadoDeDocumento += sPeriodoDocumentoEmpleado + "<br/>";
-
-                                                                        // Modificar formato de la fecha del periodo
-                                                                        if (frecuenciaPagoNomina == "Mensual")
+                                                                        foreach (var documentoEmpleado in sbDocumentosEmpleadosLO.FindEx())
                                                                         {
-                                                                            sPeriodoDocumentoEmpleado = dtFechaInicioPeriodo.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture);
-                                                                        }
+                                                                            oPropertyValues = PermanentVault
+                                                                                .ObjectPropertyOperations
+                                                                                .GetProperties(documentoEmpleado.ObjVer);
 
-                                                                        // Insert
-                                                                        oQuery.InsertarDocumentosFaltantesChecklist(
-                                                                            bDelete,
-                                                                            sProveedor: nombreOTituloObjetoPadre.ToString(),
-                                                                            iProveedorID: organizacion.ObjVer.ID,
-                                                                            sEmpleado: contactoExterno.Title,
-                                                                            iEmpleadoID: contactoExterno.ObjVer.ID,
-                                                                            sCategoria: "Documento Vencido",
-                                                                            sTipoDocumento: "Documento Empleado",
-                                                                            sNombreDocumento: claseEmpleadoLO.NombreClaseDocumento,
-                                                                            iDocumentoID: claseEmpleadoLO.DocumentoEmpleado.ID,
-                                                                            sVigencia: frecuenciaPagoNomina,
-                                                                            sPeriodo: sPeriodoDocumentoEmpleado);
+                                                                            // Invocar fecha de pago de CFDI Nomina
+                                                                            var pd_FechaDePago = PermanentVault
+                                                                                .PropertyDefOperations
+                                                                                .GetPropertyDefIDByAlias("CFDI.FechaPago.Texto");
 
-                                                                        // Modificar el estatus del Contacto Externo
-                                                                        ActualizarEstatusDocumento
-                                                                        (
-                                                                            "Contacto Externo", 
-                                                                            contactoExterno.ObjVer, 
-                                                                            pd_EstatusContactoExternoSE,
-                                                                            1, 0, 0,
-                                                                            ot_ContactoExternoSE
-                                                                        );
+                                                                            // Obtener fecha del documento
+                                                                            var oFechaDeDocumento = oPropertyValues
+                                                                                .SearchForPropertyEx(pd_FechaDePago, true)
+                                                                                .TypedValue
+                                                                                .Value;
 
-                                                                        // Concatenar los documentos al contacto externo correspondiente
-                                                                        bActivaConcatenarContactoExterno = true;
-                                                                    }
+                                                                            DateTime dtFechaDeDocumento = Convert.ToDateTime(oFechaDeDocumento);
 
-                                                                    // Enviar los documentos vencidos a la tabla de documentos faltantes checklist 
-                                                                    foreach (var documento in oDocumentosVencidos)
-                                                                    {
-                                                                        sPeriodoDocumentoEmpleado = sPeriodoDocumentoFaltante;
+                                                                            string sFechaDeDocumento = dtFechaDeDocumento.ToString("yyyy-MM-dd");
 
-                                                                        // Modificar formato de la fecha del periodo
-                                                                        if (frecuenciaPagoNomina == "Mensual")
-                                                                        {
-                                                                            sPeriodoDocumentoEmpleado = dtFechaInicioPeriodo.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture);
-                                                                        }
-
-                                                                        SysUtils.ReportInfoToEventLog("Insertando documento: " + documento.ID + " en la tabla DocumentosCaducados");
-
-                                                                        if (bValidaDocumentoPorProyecto == true)
-                                                                        {
-                                                                            foreach (var proyecto in searchResultsProyectoPorProveedor)
+                                                                            // Validar si la fecha del documento esta dentro del periodo obtenido
+                                                                            if (ComparaFechaBaseContraUnaFechaInicioYFechaFin(
+                                                                                sFechaDeDocumento,
+                                                                                dtFechaInicioPeriodo,
+                                                                                dtFechaFinPeriodo) == true)
                                                                             {
-                                                                                var pd_DocumentosRelacionadosAlProyecto = proyecto.Vault.PropertyDefOperations.GetPropertyDefIDByAlias("PD.Document");
-                                                                                var oPropertiesProyecto = proyecto.Properties;
-
-                                                                                var oListDocumentosProyecto = oPropertiesProyecto
-                                                                                    .SearchForPropertyEx(pd_DocumentosRelacionadosAlProyecto, true)
-                                                                                    .TypedValue
-                                                                                    .GetValueAsLookups()
-                                                                                    .ToObjVerExs(proyecto.Vault);
-
-                                                                                foreach (var documentoProyecto in oListDocumentosProyecto)
-                                                                                {
-                                                                                    if (documento.ID == documentoProyecto.ObjVer.ID)
-                                                                                    {
-                                                                                        // Insert
-                                                                                        oQuery.InsertarDocumentosCaducados(
-                                                                                            sProveedor: nombreOTituloObjetoPadre.ToString(),
-                                                                                            iProveedorID: organizacion.ObjVer.ID,
-                                                                                            sProyecto: proyecto.Title,
-                                                                                            iProyectoID: proyecto.ID,
-                                                                                            sEmpleado: contactoExterno.Title,
-                                                                                            iEmpleadoID: contactoExterno.ObjVer.ID,
-                                                                                            sCategoria: "Documento Vencido",
-                                                                                            sTipoDocumento: "Documento Empleado",
-                                                                                            sNombreDocumento: claseEmpleadoLO.NombreClaseDocumento,
-                                                                                            iDocumentoID: documento.ID,
-                                                                                            sVigencia: frecuenciaPagoNomina,
-                                                                                            sPeriodo: sPeriodoDocumentoEmpleado);
-                                                                                    }
-                                                                                    else
-                                                                                    {
-                                                                                        // Insert
-                                                                                        oQuery.InsertarDocumentosCaducados(
-                                                                                            sProveedor: nombreOTituloObjetoPadre.ToString(),
-                                                                                            iProveedorID: organizacion.ObjVer.ID,
-                                                                                            sProyecto: proyecto.Title,
-                                                                                            iProyectoID: proyecto.ID,
-                                                                                            sEmpleado: contactoExterno.Title,
-                                                                                            iEmpleadoID: contactoExterno.ObjVer.ID,
-                                                                                            sCategoria: "Documento Faltante",
-                                                                                            sTipoDocumento: "Documento Empleado",
-                                                                                            sNombreDocumento: claseEmpleadoLO.NombreClaseDocumento,
-                                                                                            iDocumentoID: 0,
-                                                                                            sVigencia: frecuenciaPagoNomina,
-                                                                                            sPeriodo: sPeriodoDocumentoEmpleado);
-                                                                                    }
-                                                                                }
+                                                                                oDocumentosVigentesPorValidar.Add(documentoEmpleado.ObjVer);
                                                                             }
+                                                                            else
+                                                                            {
+                                                                                oDocumentosVencidos.Add(documentoEmpleado.ObjVer);
+                                                                            }
+
+                                                                            // Validar vigencia tomando como referencia el ultimo periodo
+                                                                            if (ValidarVigenciaDeDocumentoEnPeriodoActual(
+                                                                                frecuenciaPagoNomina,
+                                                                                dtFechaDeDocumento) == true)
+                                                                            {
+                                                                                // Actualizar el estatus "Vigente" al documento
+                                                                                ActualizarEstatusDocumento
+                                                                                (
+                                                                                    "Documento",
+                                                                                    documentoEmpleado.ObjVer,
+                                                                                    pd_EstatusDocumento,
+                                                                                    1,
+                                                                                    grupo.ConfigurationWorkflow.WorkflowDocumentoEmpleado.WorkflowValidacionesDocEmpleado.ID,
+                                                                                    grupo.ConfigurationWorkflow.WorkflowDocumentoEmpleado.EstadoDocumentoVigenteEmpleado.ID
+                                                                                );
+                                                                            }
+                                                                            else
+                                                                            {
+                                                                                // Agregar el estatus "Vencido" al documento
+                                                                                ActualizarEstatusDocumento
+                                                                                (
+                                                                                    "Documento",
+                                                                                    documentoEmpleado.ObjVer,
+                                                                                    pd_EstatusDocumento,
+                                                                                    2,
+                                                                                    grupo.ConfigurationWorkflow.WorkflowChecklist.WorkflowValidacionesChecklist.ID,
+                                                                                    grupo.ConfigurationWorkflow.WorkflowChecklist.EstadoDocumentoVencido.ID
+                                                                                );
+                                                                            }
+                                                                        }
+
+                                                                        // Fecha inicio y fin del periodo validado
+                                                                        var sPeriodoDocumentoFaltante = ObtenerPeriodoDeDocumentoFaltante
+                                                                        (
+                                                                            frecuenciaPagoNomina,
+                                                                            dtFechaInicioPeriodo,
+                                                                            dtFechaFinPeriodo
+                                                                        );
+
+                                                                        if (oDocumentosVigentesPorValidar.Count > 0)
+                                                                        {
+                                                                            // Agregar a la lista, el documento encontrado
+                                                                            oListaDeDocumentosPorEmpleado.Add(oDocumentosVigentesPorValidar[0]);
+
+                                                                            // Actualizar el estatus del Contacto Externo
+                                                                            ActualizarEstatusDocumento
+                                                                            (
+                                                                                "Contacto Externo",
+                                                                                contactoExterno.ObjVer,
+                                                                                pd_EstatusContactoExternoSE,
+                                                                                2, 0, 0,
+                                                                                ot_ContactoExternoSE
+                                                                            );
                                                                         }
                                                                         else
                                                                         {
+                                                                            // Se agrega al correo el nombre del documento no encontrado
+                                                                            // en el periodo validado
+                                                                            string ListaItemsEmpleado = LeerPlantilla(RutaListaEmpleado);
+                                                                            sDocumentosContatenados += ListaItemsEmpleado.Replace("[DocumentoEmpleado]", claseEmpleadoLO.NombreClaseDocumento);
+
+                                                                            sPeriodoDocumentoEmpleado = sPeriodoDocumentoFaltante;
+
+                                                                            sPeriodoSolicitadoDeDocumento += sPeriodoDocumentoEmpleado + "<br/>";
+
+                                                                            // Modificar formato de la fecha del periodo
+                                                                            if (frecuenciaPagoNomina == "Mensual")
+                                                                            {
+                                                                                sPeriodoDocumentoEmpleado = dtFechaInicioPeriodo.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture);
+                                                                            }
+
                                                                             // Insert
-                                                                            oQuery.InsertarDocumentosCaducados(
+                                                                            oQuery.InsertarDocumentosFaltantesChecklist(
+                                                                                bDelete,
                                                                                 sProveedor: nombreOTituloObjetoPadre.ToString(),
                                                                                 iProveedorID: organizacion.ObjVer.ID,
                                                                                 sEmpleado: contactoExterno.Title,
@@ -1499,48 +1407,159 @@ namespace Arkiva.MonitorFiscal.Checklist
                                                                                 sCategoria: "Documento Vencido",
                                                                                 sTipoDocumento: "Documento Empleado",
                                                                                 sNombreDocumento: claseEmpleadoLO.NombreClaseDocumento,
-                                                                                iDocumentoID: documento.ID,
+                                                                                iDocumentoID: claseEmpleadoLO.DocumentoEmpleado.ID,
                                                                                 sVigencia: frecuenciaPagoNomina,
                                                                                 sPeriodo: sPeriodoDocumentoEmpleado);
+
+                                                                            // Modificar el estatus del Contacto Externo
+                                                                            ActualizarEstatusDocumento
+                                                                            (
+                                                                                "Contacto Externo",
+                                                                                contactoExterno.ObjVer,
+                                                                                pd_EstatusContactoExternoSE,
+                                                                                1, 0, 0,
+                                                                                ot_ContactoExternoSE
+                                                                            );
+
+                                                                            // Concatenar los documentos al contacto externo correspondiente
+                                                                            bActivaConcatenarContactoExterno = true;
+                                                                        }
+
+                                                                        // Enviar los documentos vencidos a la tabla de documentos faltantes checklist 
+                                                                        foreach (var documento in oDocumentosVencidos)
+                                                                        {
+                                                                            sPeriodoDocumentoEmpleado = sPeriodoDocumentoFaltante;
+
+                                                                            // Modificar formato de la fecha del periodo
+                                                                            if (frecuenciaPagoNomina == "Mensual")
+                                                                            {
+                                                                                sPeriodoDocumentoEmpleado = dtFechaInicioPeriodo.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture);
+                                                                            }
+
+                                                                            SysUtils.ReportInfoToEventLog("Insertando documento: " + documento.ID + " en la tabla DocumentosCaducados");
+
+                                                                            if (bValidaDocumentoPorProyecto == true)
+                                                                            {
+                                                                                foreach (var proyecto in searchResultsProyectoPorProveedor)
+                                                                                {
+                                                                                    var pd_DocumentosRelacionadosAlProyecto = proyecto.Vault.PropertyDefOperations.GetPropertyDefIDByAlias("PD.Document");
+                                                                                    var oPropertiesProyecto = proyecto.Properties;
+
+                                                                                    var oListDocumentosProyecto = oPropertiesProyecto
+                                                                                        .SearchForPropertyEx(pd_DocumentosRelacionadosAlProyecto, true)
+                                                                                        .TypedValue
+                                                                                        .GetValueAsLookups()
+                                                                                        .ToObjVerExs(proyecto.Vault);
+
+                                                                                    foreach (var documentoProyecto in oListDocumentosProyecto)
+                                                                                    {
+                                                                                        if (documento.ID == documentoProyecto.ObjVer.ID)
+                                                                                        {
+                                                                                            // Insert
+                                                                                            oQuery.InsertarDocumentosCaducados(
+                                                                                                sProveedor: nombreOTituloObjetoPadre.ToString(),
+                                                                                                iProveedorID: organizacion.ObjVer.ID,
+                                                                                                sProyecto: proyecto.Title,
+                                                                                                iProyectoID: proyecto.ID,
+                                                                                                sEmpleado: contactoExterno.Title,
+                                                                                                iEmpleadoID: contactoExterno.ObjVer.ID,
+                                                                                                sCategoria: "Documento Vencido",
+                                                                                                sTipoDocumento: "Documento Empleado",
+                                                                                                sNombreDocumento: claseEmpleadoLO.NombreClaseDocumento,
+                                                                                                iDocumentoID: documento.ID,
+                                                                                                sVigencia: frecuenciaPagoNomina,
+                                                                                                sPeriodo: sPeriodoDocumentoEmpleado);
+                                                                                        }
+                                                                                        else
+                                                                                        {
+                                                                                            // Insert
+                                                                                            oQuery.InsertarDocumentosCaducados(
+                                                                                                sProveedor: nombreOTituloObjetoPadre.ToString(),
+                                                                                                iProveedorID: organizacion.ObjVer.ID,
+                                                                                                sProyecto: proyecto.Title,
+                                                                                                iProyectoID: proyecto.ID,
+                                                                                                sEmpleado: contactoExterno.Title,
+                                                                                                iEmpleadoID: contactoExterno.ObjVer.ID,
+                                                                                                sCategoria: "Documento Faltante",
+                                                                                                sTipoDocumento: "Documento Empleado",
+                                                                                                sNombreDocumento: claseEmpleadoLO.NombreClaseDocumento,
+                                                                                                iDocumentoID: 0,
+                                                                                                sVigencia: frecuenciaPagoNomina,
+                                                                                                sPeriodo: sPeriodoDocumentoEmpleado);
+                                                                                        }
+                                                                                    }
+                                                                                }
+                                                                            }
+                                                                            else
+                                                                            {
+                                                                                // Insert
+                                                                                oQuery.InsertarDocumentosCaducados(
+                                                                                    sProveedor: nombreOTituloObjetoPadre.ToString(),
+                                                                                    iProveedorID: organizacion.ObjVer.ID,
+                                                                                    sEmpleado: contactoExterno.Title,
+                                                                                    iEmpleadoID: contactoExterno.ObjVer.ID,
+                                                                                    sCategoria: "Documento Vencido",
+                                                                                    sTipoDocumento: "Documento Empleado",
+                                                                                    sNombreDocumento: claseEmpleadoLO.NombreClaseDocumento,
+                                                                                    iDocumentoID: documento.ID,
+                                                                                    sVigencia: frecuenciaPagoNomina,
+                                                                                    sPeriodo: sPeriodoDocumentoEmpleado);
+                                                                            }
                                                                         }
                                                                     }
-                                                                }
-                                                                else
-                                                                {
-                                                                    // Si no se encuentra ningun documento de la clase de documento buscada
-                                                                    // Se agrega la clase de documento en el correo para que se suba a la boveda
-                                                                    string ListaItemsEmpleado = LeerPlantilla(RutaListaEmpleado);
-                                                                    sDocumentosContatenados += ListaItemsEmpleado.Replace("[DocumentoEmpleado]", claseEmpleadoLO.NombreClaseDocumento);
-
-                                                                    // Dar formato a periodo faltante de documento del proveedor
-                                                                    var sPeriodoDocumentoFaltante = ObtenerPeriodoDeDocumentoFaltante
-                                                                    (
-                                                                        frecuenciaPagoNomina,
-                                                                        dtFechaInicioPeriodo,
-                                                                        dtFechaFinPeriodo
-                                                                    );
-
-                                                                    sPeriodoDocumentoEmpleado = sPeriodoDocumentoFaltante; //sMesAnioFechaInicioPeriodo;
-
-                                                                    sPeriodoSolicitadoDeDocumento += sPeriodoDocumentoEmpleado + "<br/>";
-
-                                                                    // Modificar formato de la fecha del periodo para enviarla a la BD
-                                                                    if (frecuenciaPagoNomina == "Mensual")
+                                                                    else
                                                                     {
-                                                                        sPeriodoDocumentoEmpleado = dtFechaInicioPeriodo.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture);
-                                                                    }
+                                                                        // Si no se encuentra ningun documento de la clase de documento buscada
+                                                                        // Se agrega la clase de documento en el correo para que se suba a la boveda
+                                                                        string ListaItemsEmpleado = LeerPlantilla(RutaListaEmpleado);
+                                                                        sDocumentosContatenados += ListaItemsEmpleado.Replace("[DocumentoEmpleado]", claseEmpleadoLO.NombreClaseDocumento);
 
-                                                                    if (bValidaDocumentoPorProyecto == true)
-                                                                    {
-                                                                        foreach (var proyecto in searchResultsProyectoPorProveedor)
+                                                                        // Dar formato a periodo faltante de documento del proveedor
+                                                                        var sPeriodoDocumentoFaltante = ObtenerPeriodoDeDocumentoFaltante
+                                                                        (
+                                                                            frecuenciaPagoNomina,
+                                                                            dtFechaInicioPeriodo,
+                                                                            dtFechaFinPeriodo
+                                                                        );
+
+                                                                        sPeriodoDocumentoEmpleado = sPeriodoDocumentoFaltante; //sMesAnioFechaInicioPeriodo;
+
+                                                                        sPeriodoSolicitadoDeDocumento += sPeriodoDocumentoEmpleado + "<br/>";
+
+                                                                        // Modificar formato de la fecha del periodo para enviarla a la BD
+                                                                        if (frecuenciaPagoNomina == "Mensual")
+                                                                        {
+                                                                            sPeriodoDocumentoEmpleado = dtFechaInicioPeriodo.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture);
+                                                                        }
+
+                                                                        if (bValidaDocumentoPorProyecto == true)
+                                                                        {
+                                                                            foreach (var proyecto in searchResultsProyectoPorProveedor)
+                                                                            {
+                                                                                // Enviar la informacion del documento faltante a la BD
+                                                                                oQuery.InsertarDocumentosFaltantesChecklist(
+                                                                                    bDelete,
+                                                                                    sProveedor: nombreOTituloObjetoPadre.ToString(),
+                                                                                    iProveedorID: organizacion.ObjVer.ID,
+                                                                                    sProyecto: proyecto.Title,
+                                                                                    iProyectoID: proyecto.ID,
+                                                                                    sEmpleado: contactoExterno.Title,
+                                                                                    iEmpleadoID: contactoExterno.ObjVer.ID,
+                                                                                    sCategoria: "Documento Faltante",
+                                                                                    sTipoDocumento: "Documento Empleado",
+                                                                                    sNombreDocumento: claseEmpleadoLO.NombreClaseDocumento,
+                                                                                    iDocumentoID: 0,
+                                                                                    sVigencia: frecuenciaPagoNomina,
+                                                                                    sPeriodo: sPeriodoDocumentoEmpleado);
+                                                                            }
+                                                                        }
+                                                                        else
                                                                         {
                                                                             // Enviar la informacion del documento faltante a la BD
                                                                             oQuery.InsertarDocumentosFaltantesChecklist(
                                                                                 bDelete,
                                                                                 sProveedor: nombreOTituloObjetoPadre.ToString(),
                                                                                 iProveedorID: organizacion.ObjVer.ID,
-                                                                                sProyecto: proyecto.Title,
-                                                                                iProyectoID: proyecto.ID,
                                                                                 sEmpleado: contactoExterno.Title,
                                                                                 iEmpleadoID: contactoExterno.ObjVer.ID,
                                                                                 sCategoria: "Documento Faltante",
@@ -1550,79 +1569,94 @@ namespace Arkiva.MonitorFiscal.Checklist
                                                                                 sVigencia: frecuenciaPagoNomina,
                                                                                 sPeriodo: sPeriodoDocumentoEmpleado);
                                                                         }
-                                                                    }
-                                                                    else
-                                                                    {
-                                                                        // Enviar la informacion del documento faltante a la BD
-                                                                        oQuery.InsertarDocumentosFaltantesChecklist(
-                                                                            bDelete,
-                                                                            sProveedor: nombreOTituloObjetoPadre.ToString(),
-                                                                            iProveedorID: organizacion.ObjVer.ID,
-                                                                            sEmpleado: contactoExterno.Title,
-                                                                            iEmpleadoID: contactoExterno.ObjVer.ID,
-                                                                            sCategoria: "Documento Faltante",
-                                                                            sTipoDocumento: "Documento Empleado",
-                                                                            sNombreDocumento: claseEmpleadoLO.NombreClaseDocumento,
-                                                                            iDocumentoID: 0,
-                                                                            sVigencia: frecuenciaPagoNomina,
-                                                                            sPeriodo: sPeriodoDocumentoEmpleado);
+
+                                                                        // Modificar el estatus del Contacto Externo
+                                                                        ActualizarEstatusDocumento
+                                                                        (
+                                                                            "Contacto Externo",
+                                                                            contactoExterno.ObjVer,
+                                                                            pd_EstatusContactoExternoSE,
+                                                                            1, 0, 0,
+                                                                            ot_ContactoExternoSE
+                                                                        );
+
+                                                                        // Concatenar los documentos al contacto externo correspondiente
+                                                                        bActivaConcatenarContactoExterno = true;
                                                                     }
 
-                                                                    // Modificar el estatus del Contacto Externo
-                                                                    ActualizarEstatusDocumento
+                                                                    // Crear nuevo periodo a partir de fecha fin que se convierte en la nueva fecha inicio
+                                                                    dtFechaInicioPeriodo = dtFechaFinPeriodo;
+                                                                    dtFechaFinPeriodo = ObtenerRangoDePeriodoDelDocumento
                                                                     (
-                                                                        "Contacto Externo", 
-                                                                        contactoExterno.ObjVer, 
-                                                                        pd_EstatusContactoExternoSE, 
-                                                                        1, 0, 0,
-                                                                        ot_ContactoExternoSE
+                                                                        dtFechaInicioPeriodo,
+                                                                        frecuenciaPagoNomina,
+                                                                        1
                                                                     );
 
-                                                                    // Concatenar los documentos al contacto externo correspondiente
-                                                                    bActivaConcatenarContactoExterno = true;
+                                                                    sFechaFin = "";
+                                                                    sFechaFin = dtFechaFinPeriodo.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture);
+
+                                                                    iDateCompare = DateTime.Compare
+                                                                    (
+                                                                        Convert.ToDateTime(sFechaActual), // t1
+                                                                        Convert.ToDateTime(sFechaFin)     // t2
+                                                                    );
                                                                 }
 
-                                                                // Crear nuevo periodo a partir de fecha fin que se convierte en la nueva fecha inicio
-                                                                dtFechaInicioPeriodo = dtFechaFinPeriodo;
-                                                                dtFechaFinPeriodo = ObtenerRangoDePeriodoDelDocumento
-                                                                (
-                                                                    dtFechaInicioPeriodo,
-                                                                    frecuenciaPagoNomina,
-                                                                    1
-                                                                );
-
-                                                                sFechaFin = "";
-                                                                sFechaFin = dtFechaFinPeriodo.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture);
-
-                                                                iDateCompare = DateTime.Compare
-                                                                (
-                                                                    Convert.ToDateTime(sFechaActual), // t1
-                                                                    Convert.ToDateTime(sFechaFin)     // t2
-                                                                );
-                                                            }                                                            
-
-                                                            // Relacionar documentos en Contacto Externo
-                                                            if (oListaDeDocumentosPorEmpleado.Count > 0)
-                                                            {
-                                                                //RelacionaDocumentosVigentes(
-                                                                //    pd_DocumentosSEContactoExterno,
-                                                                //    contactoExterno,
-                                                                //    oListaDeDocumentosPorEmpleado);
-                                                            }                                                                                                                        
+                                                                // Relacionar documentos en Contacto Externo
+                                                                if (oListaDeDocumentosPorEmpleado.Count > 0)
+                                                                {
+                                                                    //RelacionaDocumentosVigentes(
+                                                                    //    pd_DocumentosSEContactoExterno,
+                                                                    //    contactoExterno,
+                                                                    //    oListaDeDocumentosPorEmpleado);
+                                                                }
+                                                            }
                                                         }
                                                     }
-                                                }                                               
+                                                }
+
+                                                // Concatenar nombre de contacto externo y los documentos no encontrados
+                                                int valorEmpleado = 1;
+                                                if (bActivaConcatenarContactoExterno)
+                                                {
+                                                    NombreContactoExterno = contactoExterno.Title;
+                                                    string TbodyDocumentosEmpleado = LeerPlantilla(RutaTbodyEmpleado);
+                                                    string TbodyRowColor = "";
+
+                                                    if ((valorEmpleado % 2) == 0)
+                                                    {
+                                                        TbodyRowColor = "#eee";
+                                                    }
+                                                    else
+                                                    {
+                                                        TbodyRowColor = "#ffff";
+                                                    }
+
+                                                    sDocumentosContatenados += sDocumentosEnviadosAEmpleado;
+                                                    sPeriodoSolicitadoDeDocumento += sPeriodosDeDocumentosEnviadosAEmpleado;
+
+                                                    sBodyMessageDocumentsEmp = TbodyDocumentosEmpleado.Replace("[ListaEmpleado]", sDocumentosContatenados);
+                                                    sBodyMessageDocumentsEmp = sBodyMessageDocumentsEmp.Replace("[Empleado]", NombreContactoExterno);
+                                                    sBodyMessageDocumentsEmp = sBodyMessageDocumentsEmp.Replace("[trColor]", TbodyRowColor);
+                                                    sBodyMessageDocumentsEmp = sBodyMessageDocumentsEmp.Replace("[Mes]", sPeriodoSolicitadoDeDocumento); //"PENDIENTE"
+
+                                                    tBodyEmpleado += sBodyMessageDocumentsEmp;
+
+                                                    // Limpiar documentos concatenados para evitar duplicidad
+                                                    sDocumentosEnviadosAEmpleado = "";
+                                                    sPeriodosDeDocumentosEnviadosAEmpleado = "";
+                                                }
                                             }
 
-                                            // Concatenar nombre de contacto externo y los documentos no encontrados
-                                            int valorEmpleado = 1;
-                                            if (bActivaConcatenarContactoExterno)
+                                            int valor = 1;
+
+                                            if (bConcatenateDocument == true)
                                             {
-                                                NombreContactoExterno = contactoExterno.Title;
-                                                string TbodyDocumentosEmpleado = LeerPlantilla(RutaTbodyEmpleado);
+                                                string TbodyDocumentos = LeerPlantilla(RutaTbody);
                                                 string TbodyRowColor = "";
 
-                                                if ((valorEmpleado % 2) == 0)
+                                                if ((valor % 2) == 0)
                                                 {
                                                     TbodyRowColor = "#eee";
                                                 }
@@ -1631,130 +1665,99 @@ namespace Arkiva.MonitorFiscal.Checklist
                                                     TbodyRowColor = "#ffff";
                                                 }
 
-                                                sDocumentosContatenados += sDocumentosEnviadosAEmpleado;
-                                                sPeriodoSolicitadoDeDocumento += sPeriodosDeDocumentosEnviadosAEmpleado;
+                                                sBodyMessageDocuments = TbodyDocumentos.Replace("[Lista]", sChecklistDocumentName);
+                                                sBodyMessageDocuments = sBodyMessageDocuments.Replace("[Documento]", "Documentos por actualizar");
+                                                sBodyMessageDocuments = sBodyMessageDocuments.Replace("[trColor]", TbodyRowColor);
+                                                sBodyMessageDocuments = sBodyMessageDocuments.Replace("[Mes]", sPeriodoVencimientoDocumentoLO);
 
-                                                sBodyMessageDocumentsEmp = TbodyDocumentosEmpleado.Replace("[ListaEmpleado]", sDocumentosContatenados);
-                                                sBodyMessageDocumentsEmp = sBodyMessageDocumentsEmp.Replace("[Empleado]", NombreContactoExterno);
-                                                sBodyMessageDocumentsEmp = sBodyMessageDocumentsEmp.Replace("[trColor]", TbodyRowColor);
-                                                sBodyMessageDocumentsEmp = sBodyMessageDocumentsEmp.Replace("[Mes]", sPeriodoSolicitadoDeDocumento); //"PENDIENTE"
-
-                                                tBodyEmpleado += sBodyMessageDocumentsEmp;
-
-                                                // Limpiar documentos concatenados para evitar duplicidad
-                                                sDocumentosEnviadosAEmpleado = "";
-                                                sPeriodosDeDocumentosEnviadosAEmpleado = "";
+                                                tBody += sBodyMessageDocuments;
                                             }
                                         }
 
-                                        int valor = 1;
-
-                                        if (bConcatenateDocument == true)
+                                        // Enviar notificacion (correo)
+                                        if (bNotification)
                                         {
-                                            string TbodyDocumentos = LeerPlantilla(RutaTbody);
-                                            string TbodyRowColor = "";
+                                            // Agregar estatus "Documentos Pendientes" en el proveedor
+                                            ActualizarEstatusDocumento
+                                            (
+                                                "Proveedor",
+                                                organizacion.ObjVer,
+                                                pd_EstatusProveedor,
+                                                3, 0, 0,
+                                                grupo.ValidacionOrganizacion.ObjetoOrganizacion
+                                            );
 
-                                            if ((valor % 2) == 0)
+                                            if (contactosAdministradores.Count > 0)
                                             {
-                                                TbodyRowColor = "#eee";
-                                            }
-                                            else
-                                            {
-                                                TbodyRowColor = "#ffff";
-                                            }
+                                                List<string> sEmails = new List<string>();
 
-                                            sBodyMessageDocuments = TbodyDocumentos.Replace("[Lista]", sChecklistDocumentName);
-                                            sBodyMessageDocuments = sBodyMessageDocuments.Replace("[Documento]", "Documentos por actualizar");
-                                            sBodyMessageDocuments = sBodyMessageDocuments.Replace("[trColor]", TbodyRowColor);
-                                            sBodyMessageDocuments = sBodyMessageDocuments.Replace("[Mes]", sPeriodoVencimientoDocumentoLO);
+                                                // Extraer el email de contactos externos en proveedor
+                                                foreach (var contacto in contactosAdministradores)
+                                                {
+                                                    oPropertyValues = PermanentVault
+                                                        .ObjectPropertyOperations
+                                                        .GetProperties(contacto.ObjVer);
 
-                                            tBody += sBodyMessageDocuments;
+                                                    var emailContactoExterno = oPropertyValues
+                                                        .SearchForProperty(Configuration.ConfigurationServiciosGenerales.ConfigurationNotificaciones.PDEmail)
+                                                        .TypedValue
+                                                        .Value;
+
+                                                    sEmails.Add(emailContactoExterno.ToString());
+                                                }
+
+                                                // Creacion de mensaje del correo
+                                                Plantilla = Plantilla.Replace("[Proveedor]", nombreOTituloObjetoPadre.ToString());
+                                                Plantilla = Plantilla.Replace("[Tbody]", tBody);
+                                                Plantilla = Plantilla.Replace("[TbodyEmpleado]", tBodyEmpleado);
+                                                Plantilla = Plantilla.Replace("[Cliente]", nombreOTituloObjetoPadre.ToString());
+
+                                                sMainBodyMessage = Plantilla;
+
+                                                LinkedResource ImgBanner = new LinkedResource(RutaBanner, MediaTypeNames.Image.Jpeg);
+                                                LinkedResource ImgCloud = new LinkedResource(RutaCloud, MediaTypeNames.Image.Jpeg);
+                                                LinkedResource ImgFooter = new LinkedResource(RutaFooter, MediaTypeNames.Image.Jpeg);
+
+                                                ImgBanner.ContentId = "ImgBanner";
+                                                ImgCloud.ContentId = "ImgCloud";
+                                                ImgFooter.ContentId = "ImgFooter";
+
+                                                AlternateView AV = AlternateView.CreateAlternateViewFromString(sMainBodyMessage, null, MediaTypeNames.Text.Html);
+                                                AV.LinkedResources.Add(ImgBanner);
+                                                AV.LinkedResources.Add(ImgCloud);
+                                                AV.LinkedResources.Add(ImgFooter);
+
+                                                Email oEmail = new Email();
+
+                                                if (oEmail.Enviar(AV, sEmails,
+                                                    Configuration.ConfigurationServiciosGenerales.ConfigurationNotificaciones.EmailService,
+                                                    Configuration.ConfigurationServiciosGenerales.ConfigurationNotificaciones.HostService,
+                                                    Configuration.ConfigurationServiciosGenerales.ConfigurationNotificaciones.PortService,
+                                                    Configuration.ConfigurationServiciosGenerales.ConfigurationNotificaciones.UsernameService,
+                                                    Configuration.ConfigurationServiciosGenerales.ConfigurationNotificaciones.PasswordService) == true)
+                                                {
+                                                    SysUtils.ReportInfoToEventLog("Fin del proceso, el correo ha sido enviado exitosamente.");
+                                                }
+                                            }
                                         }
-                                    }
-
-                                    // Enviar notificacion (correo)
-                                    if (bNotification)
-                                    {
-                                        // Agregar estatus "Documentos Pendientes" en el proveedor
-                                        ActualizarEstatusDocumento
-                                        (
-                                            "Proveedor",
-                                            organizacion.ObjVer,
-                                            pd_EstatusProveedor,
-                                            3, 0, 0,
-                                            grupo.ValidacionOrganizacion.ObjetoOrganizacion
-                                        );
-
-                                        if (contactosAdministradores.Count > 0)
+                                        else
                                         {
-                                            List<string> sEmails = new List<string>();
-
-                                            // Extraer el email de contactos externos en proveedor
-                                            foreach (var contacto in contactosAdministradores)
-                                            {
-                                                oPropertyValues = PermanentVault
-                                                    .ObjectPropertyOperations
-                                                    .GetProperties(contacto.ObjVer);
-
-                                                var emailContactoExterno = oPropertyValues
-                                                    .SearchForProperty(Configuration.ConfigurationServiciosGenerales.ConfigurationNotificaciones.PDEmail)
-                                                    .TypedValue
-                                                    .Value;
-
-                                                sEmails.Add(emailContactoExterno.ToString());
-                                            }
-
-                                            // Creacion de mensaje del correo
-                                            Plantilla = Plantilla.Replace("[Proveedor]", nombreOTituloObjetoPadre.ToString());
-                                            Plantilla = Plantilla.Replace("[Tbody]", tBody);
-                                            Plantilla = Plantilla.Replace("[TbodyEmpleado]", tBodyEmpleado);
-                                            Plantilla = Plantilla.Replace("[Cliente]", nombreOTituloObjetoPadre.ToString());
-
-                                            sMainBodyMessage = Plantilla;
-
-                                            LinkedResource ImgBanner = new LinkedResource(RutaBanner, MediaTypeNames.Image.Jpeg);
-                                            LinkedResource ImgCloud = new LinkedResource(RutaCloud, MediaTypeNames.Image.Jpeg);
-                                            LinkedResource ImgFooter = new LinkedResource(RutaFooter, MediaTypeNames.Image.Jpeg);
-
-                                            ImgBanner.ContentId = "ImgBanner";
-                                            ImgCloud.ContentId = "ImgCloud";
-                                            ImgFooter.ContentId = "ImgFooter";
-
-                                            AlternateView AV = AlternateView.CreateAlternateViewFromString(sMainBodyMessage, null, MediaTypeNames.Text.Html);
-                                            AV.LinkedResources.Add(ImgBanner);
-                                            AV.LinkedResources.Add(ImgCloud);
-                                            AV.LinkedResources.Add(ImgFooter);
-
-                                            Email oEmail = new Email();
-
-                                            if (oEmail.Enviar(AV, sEmails,
-                                                Configuration.ConfigurationServiciosGenerales.ConfigurationNotificaciones.EmailService, 
-                                                Configuration.ConfigurationServiciosGenerales.ConfigurationNotificaciones.HostService,
-                                                Configuration.ConfigurationServiciosGenerales.ConfigurationNotificaciones.PortService,
-                                                Configuration.ConfigurationServiciosGenerales.ConfigurationNotificaciones.UsernameService,
-                                                Configuration.ConfigurationServiciosGenerales.ConfigurationNotificaciones.PasswordService) == true)
-                                            {
-                                                SysUtils.ReportInfoToEventLog("Fin del proceso, el correo ha sido enviado exitosamente.");
-                                            }                                                                                
+                                            // Si no se activa la notificacion para el proveedor es porque tiene todos sus documentos al dia
+                                            // Agregar estatus "Proveedor Actualizado" en el proveedor
+                                            ActualizarEstatusDocumento
+                                            (
+                                                "Proveedor",
+                                                organizacion.ObjVer,
+                                                pd_EstatusProveedor,
+                                                4, 0, 0,
+                                                grupo.ValidacionOrganizacion.ObjetoOrganizacion
+                                            );
                                         }
-                                    }
-                                    else
-                                    {
-                                        // Si no se activa la notificacion para el proveedor es porque tiene todos sus documentos al dia
-                                        // Agregar estatus "Proveedor Actualizado" en el proveedor
-                                        ActualizarEstatusDocumento
-                                        (
-                                            "Proveedor",
-                                            organizacion.ObjVer,
-                                            pd_EstatusProveedor,
-                                            4, 0, 0,
-                                            grupo.ValidacionOrganizacion.ObjetoOrganizacion
-                                        );
                                     }
                                 }
                             }
                         }
-                    }
+                    }                    
                 });                
             }
             catch (Exception ex)
