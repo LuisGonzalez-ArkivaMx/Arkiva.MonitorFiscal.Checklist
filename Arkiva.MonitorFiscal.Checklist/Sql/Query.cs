@@ -25,6 +25,7 @@ namespace Arkiva.MonitorFiscal.Checklist.Sql
             string sTipoDocumento = "", 
             string sNombreDocumento = "", 
             int iDocumentoID = 0,
+            int iClaseID = 0,
             string sVigencia = "", 
             string sPeriodo = "")
         {
@@ -53,6 +54,7 @@ namespace Arkiva.MonitorFiscal.Checklist.Sql
                 cmd.Parameters.AddWithValue("@Tipo_Documento", sTipoDocumento);
                 cmd.Parameters.AddWithValue("@Nombre_Documento", sNombreDocumento);
                 cmd.Parameters.AddWithValue("@Documento_ID", iDocumentoID);
+                cmd.Parameters.AddWithValue("@Clase_ID", iClaseID);
                 cmd.Parameters.AddWithValue("@Vigencia", sVigencia);
                 cmd.Parameters.AddWithValue("@Periodo", sPeriodoFaltante);
                 cmd.Parameters.AddWithValue("@PeriodoFecha", sPeriodoFecha);
@@ -84,6 +86,7 @@ namespace Arkiva.MonitorFiscal.Checklist.Sql
             string sTipoDocumento = "",
             string sNombreDocumento = "",
             int iDocumentoID = 0,
+            int iClaseID = 0,
             string sVigencia = "",
             string sPeriodo = "")
         {
@@ -123,6 +126,7 @@ namespace Arkiva.MonitorFiscal.Checklist.Sql
                 cmd.Parameters.AddWithValue("@Tipo_Documento", sTipoDocumento);
                 cmd.Parameters.AddWithValue("@Nombre_Documento", sNombreDocumento);
                 cmd.Parameters.AddWithValue("@Documento_ID", iDocumentoID);
+                cmd.Parameters.AddWithValue("@Clase_ID", iClaseID);
                 cmd.Parameters.AddWithValue("@Vigencia", sVigencia);
                 cmd.Parameters.AddWithValue("@Periodo", sPeriodoFaltante);
                 cmd.Parameters.AddWithValue("@PeriodoFecha", sPeriodoFecha);

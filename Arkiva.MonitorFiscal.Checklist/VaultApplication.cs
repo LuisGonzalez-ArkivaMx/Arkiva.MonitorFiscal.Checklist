@@ -474,6 +474,7 @@ namespace Arkiva.MonitorFiscal.Checklist
                                                                         sTipoDocumento: "Documento Proveedor",
                                                                         sNombreDocumento: szNombreClaseDocumento,
                                                                         iDocumentoID: claseDocumento.DocumentoProveedor.ID,
+                                                                        iClaseID: claseDocumento.DocumentoProveedor.ID,
                                                                         sVigencia: claseDocumento.VigenciaDocumentoProveedor,
                                                                         sPeriodo: sPeriodoDocumentoProveedor);
                                                                 }
@@ -530,6 +531,7 @@ namespace Arkiva.MonitorFiscal.Checklist
                                                                                         sTipoDocumento: "Documento Proveedor",
                                                                                         sNombreDocumento: szNombreClaseDocumento,
                                                                                         iDocumentoID: documento.ID,
+                                                                                        iClaseID: claseDocumento.DocumentoProveedor.ID,
                                                                                         sVigencia: claseDocumento.VigenciaDocumentoProveedor,
                                                                                         sPeriodo: sPeriodoDocumentoProveedor);
                                                                                 }
@@ -546,6 +548,7 @@ namespace Arkiva.MonitorFiscal.Checklist
                                                                                         sTipoDocumento: "Documento Proveedor",
                                                                                         sNombreDocumento: szNombreClaseDocumento,
                                                                                         iDocumentoID: 0,
+                                                                                        iClaseID: claseDocumento.DocumentoProveedor.ID,
                                                                                         sVigencia: claseDocumento.VigenciaDocumentoProveedor,
                                                                                         sPeriodo: sPeriodoDocumentoProveedor);
                                                                                 }
@@ -562,6 +565,7 @@ namespace Arkiva.MonitorFiscal.Checklist
                                                                             sTipoDocumento: "Documento Proveedor",
                                                                             sNombreDocumento: szNombreClaseDocumento,
                                                                             iDocumentoID: documento.ID,
+                                                                            iClaseID: claseDocumento.DocumentoProveedor.ID,
                                                                             sVigencia: claseDocumento.VigenciaDocumentoProveedor,
                                                                             sPeriodo: sPeriodoDocumentoProveedor);
                                                                     }
@@ -740,6 +744,7 @@ namespace Arkiva.MonitorFiscal.Checklist
                                                                     sTipoDocumento: "Documento Proveedor",
                                                                     sNombreDocumento: szNombreClaseDocumento,
                                                                     iDocumentoID: 0,
+                                                                    iClaseID: claseDocumento.DocumentoProveedor.ID,
                                                                     sVigencia: claseDocumento.VigenciaDocumentoProveedor,
                                                                     sPeriodo: sPeriodoDocumentoProveedor);
                                                             }
@@ -755,6 +760,7 @@ namespace Arkiva.MonitorFiscal.Checklist
                                                                 sTipoDocumento: "Documento Proveedor",
                                                                 sNombreDocumento: szNombreClaseDocumento,
                                                                 iDocumentoID: 0,
+                                                                iClaseID: claseDocumento.DocumentoProveedor.ID,
                                                                 sVigencia: claseDocumento.VigenciaDocumentoProveedor,
                                                                 sPeriodo: sPeriodoDocumentoProveedor);
                                                         }
@@ -1117,6 +1123,7 @@ namespace Arkiva.MonitorFiscal.Checklist
                                                                             sTipoDocumento: "Documento Empleado",
                                                                             sNombreDocumento: szNombreClaseDocumento,
                                                                             iDocumentoID: claseEmpleadoLO.DocumentoEmpleado.ID,
+                                                                            iClaseID: claseEmpleadoLO.DocumentoEmpleado.ID,
                                                                             sVigencia: vigenciaDocumentoCD,
                                                                             sPeriodo: PeriodoVencimientoDocumentoCD);
 
@@ -1189,6 +1196,7 @@ namespace Arkiva.MonitorFiscal.Checklist
                                                                         sTipoDocumento: "Documento Empleado",
                                                                         sNombreDocumento: szNombreClaseDocumento,
                                                                         iDocumentoID: 0,
+                                                                        iClaseID: claseEmpleadoLO.DocumentoEmpleado.ID,
                                                                         sPeriodo: "Faltante");
                                                                 }
                                                             }
@@ -1205,6 +1213,7 @@ namespace Arkiva.MonitorFiscal.Checklist
                                                                     sTipoDocumento: "Documento Empleado",
                                                                     sNombreDocumento: szNombreClaseDocumento,
                                                                     iDocumentoID: 0,
+                                                                    iClaseID: claseEmpleadoLO.DocumentoEmpleado.ID,
                                                                     sPeriodo: "Faltante");
                                                             }
 
@@ -1408,6 +1417,7 @@ namespace Arkiva.MonitorFiscal.Checklist
                                                                                 sTipoDocumento: "Documento Empleado",
                                                                                 sNombreDocumento: claseEmpleadoLO.NombreClaseDocumento,
                                                                                 iDocumentoID: claseEmpleadoLO.DocumentoEmpleado.ID,
+                                                                                iClaseID: claseEmpleadoLO.DocumentoEmpleado.ID,
                                                                                 sVigencia: frecuenciaPagoNomina,
                                                                                 sPeriodo: sPeriodoDocumentoEmpleado);
 
@@ -1467,6 +1477,7 @@ namespace Arkiva.MonitorFiscal.Checklist
                                                                                                 sTipoDocumento: "Documento Empleado",
                                                                                                 sNombreDocumento: claseEmpleadoLO.NombreClaseDocumento,
                                                                                                 iDocumentoID: documento.ID,
+                                                                                                iClaseID: claseEmpleadoLO.DocumentoEmpleado.ID,
                                                                                                 sVigencia: frecuenciaPagoNomina,
                                                                                                 sPeriodo: sPeriodoDocumentoEmpleado);
                                                                                         }
@@ -1484,6 +1495,7 @@ namespace Arkiva.MonitorFiscal.Checklist
                                                                                                 sTipoDocumento: "Documento Empleado",
                                                                                                 sNombreDocumento: claseEmpleadoLO.NombreClaseDocumento,
                                                                                                 iDocumentoID: 0,
+                                                                                                iClaseID: claseEmpleadoLO.DocumentoEmpleado.ID,
                                                                                                 sVigencia: frecuenciaPagoNomina,
                                                                                                 sPeriodo: sPeriodoDocumentoEmpleado);
                                                                                         }
@@ -1502,6 +1514,7 @@ namespace Arkiva.MonitorFiscal.Checklist
                                                                                     sTipoDocumento: "Documento Empleado",
                                                                                     sNombreDocumento: claseEmpleadoLO.NombreClaseDocumento,
                                                                                     iDocumentoID: documento.ID,
+                                                                                    iClaseID: claseEmpleadoLO.DocumentoEmpleado.ID,
                                                                                     sVigencia: frecuenciaPagoNomina,
                                                                                     sPeriodo: sPeriodoDocumentoEmpleado);
                                                                             }
@@ -1549,6 +1562,7 @@ namespace Arkiva.MonitorFiscal.Checklist
                                                                                     sTipoDocumento: "Documento Empleado",
                                                                                     sNombreDocumento: claseEmpleadoLO.NombreClaseDocumento,
                                                                                     iDocumentoID: 0,
+                                                                                    iClaseID: claseEmpleadoLO.DocumentoEmpleado.ID,
                                                                                     sVigencia: frecuenciaPagoNomina,
                                                                                     sPeriodo: sPeriodoDocumentoEmpleado);
                                                                             }
@@ -1566,6 +1580,7 @@ namespace Arkiva.MonitorFiscal.Checklist
                                                                                 sTipoDocumento: "Documento Empleado",
                                                                                 sNombreDocumento: claseEmpleadoLO.NombreClaseDocumento,
                                                                                 iDocumentoID: 0,
+                                                                                iClaseID: claseEmpleadoLO.DocumentoEmpleado.ID,
                                                                                 sVigencia: frecuenciaPagoNomina,
                                                                                 sPeriodo: sPeriodoDocumentoEmpleado);
                                                                         }

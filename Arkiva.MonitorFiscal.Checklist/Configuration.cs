@@ -11,7 +11,7 @@ namespace Arkiva.MonitorFiscal.Checklist
         // NOTE: The default value needs to be placed in both the JsonConfEditor
         // (or derived) attribute, and as a default value on the member.                        
         [DataMember]
-        [JsonConfEditor(Label = "Servicios generales")]
+        [JsonConfEditor(Label = "Configuraciones generales")]
         [Security(ChangeBy = SecurityAttribute.UserLevel.VaultAdmin)]
         public ConfigurationServiciosGenerales ConfigurationServiciosGenerales { get; set; }
 
@@ -41,19 +41,20 @@ namespace Arkiva.MonitorFiscal.Checklist
     public class ConfigurationNotificaciones
     {
         [DataMember]
-        [JsonConfEditor(Label = "Host del servicio", HelpText = "Establecer el nombre o direccion IP del servicio de correo")]
+        [JsonConfEditor(Label = "Servicio SMTP", HelpText = "Establecer el nombre del servidor o direccion IP del servicio de correo")]
         public string HostService { get; set; }
 
         [DataMember]
-        [JsonConfEditor(Label = "Puerto del servicio", HelpText = "Establecer el puerto del servicio de correo")]
+        [JsonConfEditor(Label = "Puerto SMTP", HelpText = "Establecer el puerto del servicio de correo")]
         public int PortService { get; set; }
 
         [DataMember]
-        [JsonConfEditor(Label = "Usuario del servicio", HelpText = "Establecer el nombre de usuario del servicio de correo")]
+        [JsonConfEditor(Label = "Usuario", HelpText = "Establecer el nombre de usuario del servicio de correo")]
         public string UsernameService { get; set; }
 
         [DataMember]
-        [JsonConfEditor(Label = "Contraseña del servicio", HelpText = "Establecer la contraseña del servicio de correo")]
+        [JsonConfEditor(Label = "Contraseña", HelpText = "Establecer la contraseña del servicio de correo")]
+        [Security(IsPassword = true)]
         public string PasswordService { get; set; }
 
         [DataMember]
