@@ -80,7 +80,7 @@ namespace Arkiva.MonitorFiscal.Checklist
 
         // Nombre de grupo
         [DataMember]
-        [TextEditor(IsRequired = true)]
+        [TextEditor(IsRequired = true, Label = "Nombre del grupo")]
         public string Name { get; set; }
 
         [DataMember]
@@ -91,7 +91,7 @@ namespace Arkiva.MonitorFiscal.Checklist
 
         [MFPropertyDef]
         [JsonConfEditor(
-            Label = "Propiedad de la Organizacion",
+            Label = "Propiedad de la organizacion",
             HelpText = "Esta propiedad se visualiza en las clases de referencia y documentos que los relaciona al objeto origen")]
         [DataMember]
         public MFIdentifier PropertyDefProveedorSEDocumentos { get; set; }
@@ -117,14 +117,19 @@ namespace Arkiva.MonitorFiscal.Checklist
         //public MFIdentifier CategoriaTipoDocumento { get; set; }
 
         [MFPropertyDef]
-        [JsonConfEditor(Label = "Fecha de inicio de la Organizacion")]
+        [JsonConfEditor(Label = "Fecha de inicio de la organizacion")]
         [DataMember]
         public MFIdentifier FechaInicioProveedor { get; set; }
 
         [MFPropertyDef]
         [JsonConfEditor(Label = "Fecha de documento")]
         [DataMember]
-        public MFIdentifier FechaDeDocumento { get; set; }        
+        public MFIdentifier FechaDeDocumento { get; set; }
+
+        [MFPropertyDef]
+        [JsonConfEditor(Label = "Fecha Fin de Vigencia")]
+        [DataMember]
+        public MFIdentifier FechaFinVigencia { get; set; }
 
         [MFPropertyDef]
         [JsonConfEditor(Label = "Vigencia de documento")]
@@ -138,13 +143,13 @@ namespace Arkiva.MonitorFiscal.Checklist
 
         [MFPropertyDef]
         [JsonConfEditor(
-            Label = "Propiedad de Contacto Administrador",
+            Label = "Propiedad de contacto administrador",
             HelpText = "Propiedad de Contacto que se define en el objeto padre")]
         [DataMember]
         public MFIdentifier ContactoAdministrador { get; set; }
 
         [MFPropertyDef]
-        [JsonConfEditor(Label = "Propiedad de Empleado / Contacto Externo")]
+        [JsonConfEditor(Label = "Propiedad de empleado / contacto externo")]
         [DataMember]
         public MFIdentifier EmpleadoContactoExterno { get; set; }
 
@@ -200,7 +205,7 @@ namespace Arkiva.MonitorFiscal.Checklist
         public MFIdentifier ClaseReferencia { get; set; }
 
         [MFPropertyDef]
-        [JsonConfEditor(Label = "Propiedad Estatus")]
+        [JsonConfEditor(Label = "Propiedad estatus")]
         [DataMember]
         public MFIdentifier EstatusClaseReferencia { get; set; }        
     }
@@ -231,7 +236,7 @@ namespace Arkiva.MonitorFiscal.Checklist
 
         [DataMember]
         [MFPropertyDef(AllowEmpty = true)]
-        [JsonConfEditor(IsRequired = false, DefaultValue = null, Label = "Propiedad Documento Relacionado")]
+        [JsonConfEditor(IsRequired = false, DefaultValue = null, Label = "Propiedad documento relacionado")]
         public MFIdentifier PropertyDefDocumentoRelacionado { get; set; }
 
         [DataMember]
@@ -240,6 +245,13 @@ namespace Arkiva.MonitorFiscal.Checklist
             TypeEditor = "options",
             Options = "{selectOptions:[\"Documento checklist\",\"Comprobante de pago\"]}")]
         public string TipoDocumentoChecklist;
+
+        [DataMember]
+        [JsonConfEditor(
+            Label = "Tipo de validacion de vigencia del documento",
+            TypeEditor = "options",
+            Options = "{selectOptions:[\"Por periodo\",\"Por fecha de vigencia\"]}", DefaultValue = "Por fecha de vigencia")]
+        public string TipoValidacionVigenciaDocumento;        
     }
 
     [DataContract]
@@ -249,7 +261,7 @@ namespace Arkiva.MonitorFiscal.Checklist
         [DataMember]
         [JsonConfEditor(
             Label = "Nombre",
-            HelpText = "Nombre de la clase documento del Empleado, requerido para el envio del correo o notificacion")]
+            HelpText = "Nombre de la clase documento del empleado, requerido para el envio del correo o notificacion")]
         [TextEditor(IsRequired = true)]
         public string NombreClaseDocumento { get; set; }
 
@@ -261,7 +273,7 @@ namespace Arkiva.MonitorFiscal.Checklist
 
         [DataMember]
         [JsonConfEditor(
-            Label = "Tipo de Validacion",
+            Label = "Tipo de validacion",
             TypeEditor = "options",
             Options = "{selectOptions:[\"Por empleado\",\"Por frecuencia de pago\"]}")]
         public string TipoValidacion;
@@ -271,15 +283,15 @@ namespace Arkiva.MonitorFiscal.Checklist
     public class ConfigurationWorkflow
     {
         [DataMember]
-        [JsonConfEditor(Label = "Validaciones Checklist")]
+        [JsonConfEditor(Label = "Validaciones checklist")]
         public WorkflowChecklist WorkflowChecklist { get; set; }
 
         [DataMember]
-        [JsonConfEditor(Label = "Validaciones Documento Organizacion")]
+        [JsonConfEditor(Label = "Validaciones documento organizacion")]
         public WorkflowDocumentoProveedor WorkflowDocumentoProveedor { get; set; }
 
         [DataMember]
-        [JsonConfEditor(Label = "Validaciones Documento Empleado")]
+        [JsonConfEditor(Label = "Validaciones documento empleado")]
         public WorkflowDocumentoEmpleado WorkflowDocumentoEmpleado { get; set; }
     }
 
@@ -293,17 +305,17 @@ namespace Arkiva.MonitorFiscal.Checklist
 
         [MFState]
         [DataMember]
-        [JsonConfEditor(Label = "Documento Procesado")]
+        [JsonConfEditor(Label = "Documento procesado")]
         public MFIdentifier EstadoDocumentoProcesado { get; set; }
 
         [MFState]
         [DataMember]
-        [JsonConfEditor(Label = "Documento Vigente")]
+        [JsonConfEditor(Label = "Documento vigente")]
         public MFIdentifier EstadoDocumentoVigente { get; set; }
 
         [MFState]
         [DataMember]
-        [JsonConfEditor(Label = "Documento Vencido")]
+        [JsonConfEditor(Label = "Documento vencido")]
         public MFIdentifier EstadoDocumentoVencido { get; set; }
     }
 
@@ -317,7 +329,7 @@ namespace Arkiva.MonitorFiscal.Checklist
 
         [MFState]
         [DataMember]
-        [JsonConfEditor(Label = "Documento Vigente")]
+        [JsonConfEditor(Label = "Documento vigente")]
         public MFIdentifier EstadoDocumentoVigenteProveedor { get; set; }
     }
 
@@ -331,7 +343,7 @@ namespace Arkiva.MonitorFiscal.Checklist
 
         [MFState]
         [DataMember]
-        [JsonConfEditor(Label = "Documento Vigente")]
+        [JsonConfEditor(Label = "Documento vigente")]
         public MFIdentifier EstadoDocumentoVigenteEmpleado { get; set; }
     }
 }
