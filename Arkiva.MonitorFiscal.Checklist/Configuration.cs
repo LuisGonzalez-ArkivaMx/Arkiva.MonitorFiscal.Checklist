@@ -277,6 +277,13 @@ namespace Arkiva.MonitorFiscal.Checklist
             TypeEditor = "options",
             Options = "{selectOptions:[\"Por empleado\",\"Por frecuencia de pago\"]}")]
         public string TipoValidacion;
+
+        [DataMember]
+        [JsonConfEditor(
+            Label = "Tipo de validacion de vigencia del documento",
+            TypeEditor = "options",
+            Options = "{selectOptions:[\"Por periodo\",\"Por fecha de vigencia\"]}", DefaultValue = "Por fecha de vigencia")]
+        public string TipoValidacionVigenciaDocumento;
     }
 
     [DataContract]
