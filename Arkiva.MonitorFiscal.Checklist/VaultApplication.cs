@@ -10,6 +10,7 @@ using System.Globalization;
 using System.Net.Mail;
 using System.Net.Mime;
 using System.Linq;
+using System.Threading;
 
 namespace Arkiva.MonitorFiscal.Checklist
 {    
@@ -20,16 +21,25 @@ namespace Arkiva.MonitorFiscal.Checklist
     public partial class VaultApplication
         : ConfigurableVaultApplicationBase<Configuration>
     {
-        #region Overrides of VaultApplicationBase
+        CultureInfo defaultCulture;
 
+        #region Overrides of VaultApplicationBase
         /// <inheritdoc />
         public override void StartOperations(Vault vaultPersistent)
         {
+            string idioma = Configuration.ConfigurationServiciosGenerales.Idioma;
+            defaultCulture = new CultureInfo(idioma); // set the desired culture here
+
+            // you can also know the Client culture from env.CurrentUserSessionInfo.ClientCulture
+            SysUtils.ReportInfoToEventLog("Configurando Idioma: " + defaultCulture.Name);
+            Thread.CurrentThread.CurrentCulture = defaultCulture;
+            Thread.CurrentThread.CurrentUICulture = defaultCulture;
+
             //Inicia Proceso de Validacion de Documentos
             this.StartBackgroundOperationTask();
             //this.StartBackgroundOperationTask_2();
 
-            base.StartOperations(vaultPersistent);
+            base.StartOperations(vaultPersistent);            
         }
 
         #endregion
@@ -47,6 +57,10 @@ namespace Arkiva.MonitorFiscal.Checklist
 
         protected void StartBackgroundOperationTask()
         {
+            SysUtils.ReportInfoToEventLog("Configurando Idioma: " + defaultCulture.Name);
+            Thread.CurrentThread.CurrentCulture = defaultCulture;
+            Thread.CurrentThread.CurrentUICulture = defaultCulture;
+
             try
             {
                 this.BackgroundOperations.StartRecurringBackgroundOperation(
@@ -753,45 +767,46 @@ namespace Arkiva.MonitorFiscal.Checklist
                                                 }
                                                 else // No se encontro ningun documento de la clase validada
                                                 {
-                                                    // Si no se encuentra ningun documento de la clase de documento buscada
-                                                    // Se agrega la clase de documento en el correo para que se suba a la boveda
-                                                    string ListaItems = LeerPlantilla(RutaLista);
-                                                    sChecklistDocumentName += ListaItems.Replace("[Documento]", szNombreClaseDocumento);
-
-                                                    var sPeriodoDocumentoFaltante = ObtenerPeriodoDeDocumentoFaltante
-                                                    (
-                                                        claseDocumento.VigenciaDocumentoProveedor,
-                                                        dtFechaInicioPeriodo,
-                                                        dtFechaFinPeriodo
-                                                    );
-
-                                                    sPeriodoDocumentoProveedor = sPeriodoDocumentoFaltante;
-
-                                                    sPeriodoVencimientoDocumentoLO += sPeriodoDocumentoProveedor + "<br/>";
-
-                                                    // Modificar formato de la fecha del periodo para enviarla a la BD
-                                                    if (claseDocumento.VigenciaDocumentoProveedor == "Mensual" ||
-                                                        claseDocumento.VigenciaDocumentoProveedor == "Bimestral" ||
-                                                        claseDocumento.VigenciaDocumentoProveedor == "Trimestral" ||
-                                                        claseDocumento.VigenciaDocumentoProveedor == "Cuatrimestral" ||
-                                                        claseDocumento.VigenciaDocumentoProveedor == "Anual")
+                                                    if (claseDocumento.VigenciaDocumentoProveedor == "No Aplica")
                                                     {
-                                                        sPeriodoDocumentoProveedor = dtFechaInicioPeriodo.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture);
-                                                    }
+                                                        // Si no se encuentra ningun documento de la clase de documento buscada
+                                                        // Se agrega la clase de documento en el correo para que se suba a la boveda
+                                                        string ListaItems = LeerPlantilla(RutaLista);
+                                                        sChecklistDocumentName += ListaItems.Replace("[Documento]", szNombreClaseDocumento);
 
-                                                    if (claseDocumento.TipoDocumentoChecklist == "Documento checklist")
-                                                    {
-                                                        if (bValidaDocumentoPorProyecto == true)
+                                                        sPeriodoDocumentoProveedor = "Faltante";
+
+                                                        sPeriodoVencimientoDocumentoLO += sPeriodoDocumentoProveedor + "<br/>";
+
+                                                        if (claseDocumento.TipoDocumentoChecklist == "Documento checklist")
                                                         {
-                                                            foreach (var proyecto in searchResultsProyectoPorProveedor)
+                                                            if (bValidaDocumentoPorProyecto == true)
+                                                            {
+                                                                foreach (var proyecto in searchResultsProyectoPorProveedor)
+                                                                {
+                                                                    // Enviar la informacion del documento faltante a la BD
+                                                                    oQuery.InsertarDocumentosFaltantesChecklist(
+                                                                        bDelete,
+                                                                        sProveedor: nombreOTituloObjetoPadre.ToString(),
+                                                                        iProveedorID: organizacion.ObjVer.ID,
+                                                                        sProyecto: proyecto.Title,
+                                                                        iProyectoID: proyecto.ID,
+                                                                        sCategoria: "Documento Faltante",
+                                                                        sTipoDocumento: "Documento Proveedor",
+                                                                        sNombreDocumento: szNombreClaseDocumento,
+                                                                        iDocumentoID: 0,
+                                                                        iClaseID: claseDocumento.DocumentoProveedor.ID,
+                                                                        sVigencia: claseDocumento.VigenciaDocumentoProveedor,
+                                                                        sPeriodo: sPeriodoDocumentoProveedor);
+                                                                }
+                                                            }
+                                                            else
                                                             {
                                                                 // Enviar la informacion del documento faltante a la BD
                                                                 oQuery.InsertarDocumentosFaltantesChecklist(
                                                                     bDelete,
                                                                     sProveedor: nombreOTituloObjetoPadre.ToString(),
                                                                     iProveedorID: organizacion.ObjVer.ID,
-                                                                    sProyecto: proyecto.Title,
-                                                                    iProyectoID: proyecto.ID,
                                                                     sCategoria: "Documento Faltante",
                                                                     sTipoDocumento: "Documento Proveedor",
                                                                     sNombreDocumento: szNombreClaseDocumento,
@@ -801,22 +816,104 @@ namespace Arkiva.MonitorFiscal.Checklist
                                                                     sPeriodo: sPeriodoDocumentoProveedor);
                                                             }
                                                         }
-                                                        else
-                                                        {
-                                                            // Enviar la informacion del documento faltante a la BD
-                                                            oQuery.InsertarDocumentosFaltantesChecklist(
-                                                                bDelete,
-                                                                sProveedor: nombreOTituloObjetoPadre.ToString(),
-                                                                iProveedorID: organizacion.ObjVer.ID,
-                                                                sCategoria: "Documento Faltante",
-                                                                sTipoDocumento: "Documento Proveedor",
-                                                                sNombreDocumento: szNombreClaseDocumento,
-                                                                iDocumentoID: 0,
-                                                                iClaseID: claseDocumento.DocumentoProveedor.ID,
-                                                                sVigencia: claseDocumento.VigenciaDocumentoProveedor,
-                                                                sPeriodo: sPeriodoDocumentoProveedor);
-                                                        }
                                                     }
+                                                    else
+                                                    {
+                                                        // Validar fecha fin contra la fecha actual                                            
+                                                        string sFechaFin = dtFechaFinPeriodo.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture);
+
+                                                        int iDateCompare = DateTime.Compare
+                                                        (
+                                                            Convert.ToDateTime(sFechaActual), // t1
+                                                            Convert.ToDateTime(sFechaFin)     // t2
+                                                        );
+
+                                                        while (iDateCompare >= 0)
+                                                        {
+                                                            // Si no se encuentra ningun documento de la clase de documento buscada
+                                                            // Se agrega la clase de documento en el correo para que se suba a la boveda
+                                                            string ListaItems = LeerPlantilla(RutaLista);
+                                                            sChecklistDocumentName += ListaItems.Replace("[Documento]", szNombreClaseDocumento);
+
+                                                            var sPeriodoDocumentoFaltante = ObtenerPeriodoDeDocumentoFaltante
+                                                            (
+                                                                claseDocumento.VigenciaDocumentoProveedor,
+                                                                dtFechaInicioPeriodo,
+                                                                dtFechaFinPeriodo
+                                                            );
+
+                                                            sPeriodoDocumentoProveedor = sPeriodoDocumentoFaltante;
+
+                                                            sPeriodoVencimientoDocumentoLO += sPeriodoDocumentoProveedor + "<br/>";
+
+                                                            // Modificar formato de la fecha del periodo para enviarla a la BD
+                                                            if (claseDocumento.VigenciaDocumentoProveedor == "Mensual" ||
+                                                                claseDocumento.VigenciaDocumentoProveedor == "Bimestral" ||
+                                                                claseDocumento.VigenciaDocumentoProveedor == "Trimestral" ||
+                                                                claseDocumento.VigenciaDocumentoProveedor == "Cuatrimestral" ||
+                                                                claseDocumento.VigenciaDocumentoProveedor == "Anual")
+                                                            {
+                                                                sPeriodoDocumentoProveedor = dtFechaInicioPeriodo.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture);
+                                                            }
+
+                                                            if (claseDocumento.TipoDocumentoChecklist == "Documento checklist")
+                                                            {
+                                                                if (bValidaDocumentoPorProyecto == true)
+                                                                {
+                                                                    foreach (var proyecto in searchResultsProyectoPorProveedor)
+                                                                    {
+                                                                        // Enviar la informacion del documento faltante a la BD
+                                                                        oQuery.InsertarDocumentosFaltantesChecklist(
+                                                                            bDelete,
+                                                                            sProveedor: nombreOTituloObjetoPadre.ToString(),
+                                                                            iProveedorID: organizacion.ObjVer.ID,
+                                                                            sProyecto: proyecto.Title,
+                                                                            iProyectoID: proyecto.ID,
+                                                                            sCategoria: "Documento Faltante",
+                                                                            sTipoDocumento: "Documento Proveedor",
+                                                                            sNombreDocumento: szNombreClaseDocumento,
+                                                                            iDocumentoID: 0,
+                                                                            iClaseID: claseDocumento.DocumentoProveedor.ID,
+                                                                            sVigencia: claseDocumento.VigenciaDocumentoProveedor,
+                                                                            sPeriodo: sPeriodoDocumentoProveedor);
+                                                                    }
+                                                                }
+                                                                else
+                                                                {
+                                                                    // Enviar la informacion del documento faltante a la BD
+                                                                    oQuery.InsertarDocumentosFaltantesChecklist(
+                                                                        bDelete,
+                                                                        sProveedor: nombreOTituloObjetoPadre.ToString(),
+                                                                        iProveedorID: organizacion.ObjVer.ID,
+                                                                        sCategoria: "Documento Faltante",
+                                                                        sTipoDocumento: "Documento Proveedor",
+                                                                        sNombreDocumento: szNombreClaseDocumento,
+                                                                        iDocumentoID: 0,
+                                                                        iClaseID: claseDocumento.DocumentoProveedor.ID,
+                                                                        sVigencia: claseDocumento.VigenciaDocumentoProveedor,
+                                                                        sPeriodo: sPeriodoDocumentoProveedor);
+                                                                }
+                                                            }
+
+                                                            // Crear nuevo periodo a partir de fecha fin que se convierte en la nueva fecha inicio
+                                                            dtFechaInicioPeriodo = dtFechaFinPeriodo;
+                                                            dtFechaFinPeriodo = ObtenerRangoDePeriodoDelDocumento
+                                                            (
+                                                                dtFechaInicioPeriodo,
+                                                                claseDocumento.VigenciaDocumentoProveedor,
+                                                                1
+                                                            );
+
+                                                            sFechaFin = "";
+                                                            sFechaFin = dtFechaFinPeriodo.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture);
+
+                                                            iDateCompare = DateTime.Compare
+                                                            (
+                                                                Convert.ToDateTime(sFechaActual), // t1
+                                                                Convert.ToDateTime(sFechaFin)     // t2
+                                                            );
+                                                        }
+                                                    }                                                                                                        
 
                                                     bNotification = true;
                                                     bConcatenateDocument = true;

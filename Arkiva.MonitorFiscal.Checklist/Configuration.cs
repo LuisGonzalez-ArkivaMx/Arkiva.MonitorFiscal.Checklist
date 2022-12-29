@@ -16,7 +16,7 @@ namespace Arkiva.MonitorFiscal.Checklist
         public ConfigurationServiciosGenerales ConfigurationServiciosGenerales { get; set; }
 
         [DataMember]
-        public List<Grupo> Grupos { get; set; }
+        public List<Grupo> Grupos { get; set; }        
     }
 
     [DataContract]
@@ -34,7 +34,11 @@ namespace Arkiva.MonitorFiscal.Checklist
 
         [DataMember]
         [JsonConfEditor(Label = "Notificaciones")]
-        public ConfigurationNotificaciones ConfigurationNotificaciones { get; set; }    
+        public ConfigurationNotificaciones ConfigurationNotificaciones { get; set; }
+
+        [DataMember]
+        [JsonConfEditor(Label = "Idioma", TypeEditor = "options", Options = "{selectOptions:[\"es-MX\",\"en-US\"]}", DefaultValue = "es-MX")]
+        public string Idioma = "es-MX";
     }
 
     [DataContract]
