@@ -335,18 +335,18 @@ namespace Arkiva.MonitorFiscal.Checklist
                                                     MFDataType.MFDatatypeMultiSelectLookup,
                                                     organizacion.ObjVer.ID
                                                 );
-                                                searchBuilderDocumentosProveedor.Property
-                                                (
-                                                    MFBuiltInPropertyDef.MFBuiltInPropertyDefWorkflow,
-                                                    MFDataType.MFDatatypeLookup,
-                                                    grupo.ConfigurationWorkflow.WorkflowChecklist.WorkflowValidacionesChecklist.ID
-                                                );
-                                                searchBuilderDocumentosProveedor.Property
-                                                (
-                                                    MFBuiltInPropertyDef.MFBuiltInPropertyDefState,
-                                                    MFDataType.MFDatatypeLookup,
-                                                    grupo.ConfigurationWorkflow.WorkflowChecklist.EstadoDocumentoProcesado.ID
-                                                );
+                                                //searchBuilderDocumentosProveedor.Property
+                                                //(
+                                                //    MFBuiltInPropertyDef.MFBuiltInPropertyDefWorkflow,
+                                                //    MFDataType.MFDatatypeLookup,
+                                                //    grupo.ConfigurationWorkflow.WorkflowChecklist.WorkflowValidacionesChecklist.ID
+                                                //);
+                                                //searchBuilderDocumentosProveedor.Property
+                                                //(
+                                                //    MFBuiltInPropertyDef.MFBuiltInPropertyDefState,
+                                                //    MFDataType.MFDatatypeLookup,
+                                                //    grupo.ConfigurationWorkflow.WorkflowChecklist.EstadoDocumentoProcesado.ID
+                                                //);
 
                                                 if (searchBuilderDocumentosProveedor.FindEx().Count > 0) // Se encontro al menos un documento
                                                 {
@@ -402,7 +402,7 @@ namespace Arkiva.MonitorFiscal.Checklist
                                                                         dtFechaInicioPeriodo,
                                                                         dtFechaFinPeriodo) == true)
                                                                     {
-                                                                        oDocumentosVigentesPorValidar.Add(documentoProveedor.ObjVer);
+                                                                        oDocumentosVigentesPorValidar.Add(documentoProveedor.ObjVer);                                                                        
 
                                                                         // Actualizar el estatus "Vigente" al documento
                                                                         ActualizarEstatusDocumento
@@ -412,7 +412,11 @@ namespace Arkiva.MonitorFiscal.Checklist
                                                                             pd_EstatusDocumento,
                                                                             1,
                                                                             grupo.ConfigurationWorkflow.WorkflowDocumentoProveedor.WorkflowValidacionesDocProveedor.ID,
-                                                                            grupo.ConfigurationWorkflow.WorkflowDocumentoProveedor.EstadoDocumentoVigenteProveedor.ID
+                                                                            grupo.ConfigurationWorkflow.WorkflowDocumentoProveedor.EstadoDocumentoVigenteProveedor.ID,
+                                                                            0,
+                                                                            documentoProveedor,
+                                                                            grupo.ConfigurationWorkflow.WorkflowChecklist.WorkflowValidacionesChecklist.ID,
+                                                                            grupo.ConfigurationWorkflow.WorkflowChecklist.EstadoDocumentoProcesado.ID
                                                                         );
                                                                     }
                                                                     else
@@ -427,7 +431,11 @@ namespace Arkiva.MonitorFiscal.Checklist
                                                                             pd_EstatusDocumento,
                                                                             2,
                                                                             grupo.ConfigurationWorkflow.WorkflowChecklist.WorkflowValidacionesChecklist.ID,
-                                                                            grupo.ConfigurationWorkflow.WorkflowChecklist.EstadoDocumentoVencido.ID
+                                                                            grupo.ConfigurationWorkflow.WorkflowChecklist.EstadoDocumentoVencido.ID,
+                                                                            0,
+                                                                            documentoProveedor,
+                                                                            grupo.ConfigurationWorkflow.WorkflowChecklist.WorkflowValidacionesChecklist.ID,
+                                                                            grupo.ConfigurationWorkflow.WorkflowChecklist.EstadoDocumentoProcesado.ID
                                                                         );
                                                                     }
                                                                 }
@@ -460,7 +468,11 @@ namespace Arkiva.MonitorFiscal.Checklist
                                                                             pd_EstatusDocumento,
                                                                             1,
                                                                             grupo.ConfigurationWorkflow.WorkflowDocumentoProveedor.WorkflowValidacionesDocProveedor.ID,
-                                                                            grupo.ConfigurationWorkflow.WorkflowDocumentoProveedor.EstadoDocumentoVigenteProveedor.ID
+                                                                            grupo.ConfigurationWorkflow.WorkflowDocumentoProveedor.EstadoDocumentoVigenteProveedor.ID,
+                                                                            0,
+                                                                            documentoProveedor,
+                                                                            grupo.ConfigurationWorkflow.WorkflowChecklist.WorkflowValidacionesChecklist.ID,
+                                                                            grupo.ConfigurationWorkflow.WorkflowChecklist.EstadoDocumentoProcesado.ID
                                                                         );
                                                                     }
                                                                     else
@@ -473,7 +485,11 @@ namespace Arkiva.MonitorFiscal.Checklist
                                                                             pd_EstatusDocumento,
                                                                             2,
                                                                             grupo.ConfigurationWorkflow.WorkflowChecklist.WorkflowValidacionesChecklist.ID,
-                                                                            grupo.ConfigurationWorkflow.WorkflowChecklist.EstadoDocumentoVencido.ID
+                                                                            grupo.ConfigurationWorkflow.WorkflowChecklist.EstadoDocumentoVencido.ID,
+                                                                            0,
+                                                                            documentoProveedor,
+                                                                            grupo.ConfigurationWorkflow.WorkflowChecklist.WorkflowValidacionesChecklist.ID,
+                                                                            grupo.ConfigurationWorkflow.WorkflowChecklist.EstadoDocumentoProcesado.ID
                                                                         );
                                                                     }
                                                                 }                                                                                                                                
@@ -750,17 +766,21 @@ namespace Arkiva.MonitorFiscal.Checklist
                                                         // Activa la relacion de objetos
                                                         bActivaRelacionDeDocumentosVigentes = true;
 
-                                                        foreach (ObjVerEx documento in sbDocumentosProveedorNoAplicaVigencia)
-                                                        {
+                                                        foreach (ObjVerEx documentoProveedor in sbDocumentosProveedorNoAplicaVigencia)
+                                                        {                                                            
                                                             // Agregar el estatus "Vigente" al documento
                                                             ActualizarEstatusDocumento
                                                             (
                                                                 "Documento",
-                                                                documento.ObjVer,
+                                                                documentoProveedor.ObjVer,
                                                                 pd_EstatusDocumento,
                                                                 1,
                                                                 grupo.ConfigurationWorkflow.WorkflowDocumentoProveedor.WorkflowValidacionesDocProveedor.ID,
-                                                                grupo.ConfigurationWorkflow.WorkflowDocumentoProveedor.EstadoDocumentoVigenteProveedor.ID
+                                                                grupo.ConfigurationWorkflow.WorkflowDocumentoProveedor.EstadoDocumentoVigenteProveedor.ID,
+                                                                0,
+                                                                documentoProveedor,
+                                                                grupo.ConfigurationWorkflow.WorkflowChecklist.WorkflowValidacionesChecklist.ID,
+                                                                grupo.ConfigurationWorkflow.WorkflowChecklist.EstadoDocumentoProcesado.ID
                                                             );
                                                         }
                                                     }
@@ -1127,28 +1147,28 @@ namespace Arkiva.MonitorFiscal.Checklist
                                                             MFDataType.MFDatatypeMultiSelectLookup,
                                                             organizacion.ObjVer.ID
                                                         );
-                                                        searchBuilderDocumentosEmpleado.Property
-                                                        (
-                                                            MFBuiltInPropertyDef.MFBuiltInPropertyDefWorkflow,
-                                                            MFDataType.MFDatatypeLookup,
-                                                            grupo.ConfigurationWorkflow.WorkflowChecklist.WorkflowValidacionesChecklist.ID
-                                                        );
-                                                        searchBuilderDocumentosEmpleado.Property
-                                                        (
-                                                            MFBuiltInPropertyDef.MFBuiltInPropertyDefState,
-                                                            MFDataType.MFDatatypeLookup,
-                                                            grupo.ConfigurationWorkflow.WorkflowChecklist.EstadoDocumentoProcesado.ID
-                                                        );
+                                                        //searchBuilderDocumentosEmpleado.Property
+                                                        //(
+                                                        //    MFBuiltInPropertyDef.MFBuiltInPropertyDefWorkflow,
+                                                        //    MFDataType.MFDatatypeLookup,
+                                                        //    grupo.ConfigurationWorkflow.WorkflowChecklist.WorkflowValidacionesChecklist.ID
+                                                        //);
+                                                        //searchBuilderDocumentosEmpleado.Property
+                                                        //(
+                                                        //    MFBuiltInPropertyDef.MFBuiltInPropertyDefState,
+                                                        //    MFDataType.MFDatatypeLookup,
+                                                        //    grupo.ConfigurationWorkflow.WorkflowChecklist.EstadoDocumentoProcesado.ID
+                                                        //);
 
                                                         if (searchBuilderDocumentosEmpleado.FindEx().Count > 0) // Se encontro al menos un documento
                                                         {
-                                                            foreach (var documentoCD in searchBuilderDocumentosEmpleado.FindEx())
+                                                            foreach (var documentoEmpleado in searchBuilderDocumentosEmpleado.FindEx())
                                                             {
-                                                                oListaTodosLosDocumentosLO.Add(documentoCD.ObjVer);
+                                                                oListaTodosLosDocumentosLO.Add(documentoEmpleado.ObjVer);
 
                                                                 oPropertyValues = PermanentVault
                                                                     .ObjectPropertyOperations
-                                                                    .GetProperties(documentoCD.ObjVer);
+                                                                    .GetProperties(documentoEmpleado.ObjVer);
 
                                                                 ObjectClass oObjectClass = PermanentVault
                                                                     .ClassOperations
@@ -1173,13 +1193,13 @@ namespace Arkiva.MonitorFiscal.Checklist
                                                                         {
                                                                             dtFecha1 = Convert.ToDateTime(fechaEmisionDocumentoCD);
                                                                             sComparaFecha1 = dtFecha1.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture);
-                                                                            objVerDocumento1 = documentoCD.ObjVer;
+                                                                            objVerDocumento1 = documentoEmpleado.ObjVer;
                                                                         }
                                                                         else
                                                                         {
                                                                             dtFecha2 = Convert.ToDateTime(fechaEmisionDocumentoCD);
                                                                             sComparaFecha2 = dtFecha2.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture);
-                                                                            objVerDocumento2 = documentoCD.ObjVer;
+                                                                            objVerDocumento2 = documentoEmpleado.ObjVer;
                                                                         }
 
                                                                         if (sComparaFecha1 != "" && sComparaFecha2 != "")
@@ -1249,7 +1269,7 @@ namespace Arkiva.MonitorFiscal.Checklist
                                                                                 pd_EstatusDocumento,
                                                                                 2,
                                                                                 grupo.ConfigurationWorkflow.WorkflowChecklist.WorkflowValidacionesChecklist.ID,
-                                                                                grupo.ConfigurationWorkflow.WorkflowChecklist.EstadoDocumentoVencido.ID
+                                                                                grupo.ConfigurationWorkflow.WorkflowChecklist.EstadoDocumentoVencido.ID                                                                               
                                                                             );
                                                                         }
 
@@ -1432,18 +1452,18 @@ namespace Arkiva.MonitorFiscal.Checklist
                                                                         MFDataType.MFDatatypeMultiSelectLookup,
                                                                         organizacion.ObjVer.ID
                                                                     );
-                                                                    sbDocumentosEmpleadosLO.Property
-                                                                    (
-                                                                        MFBuiltInPropertyDef.MFBuiltInPropertyDefWorkflow,
-                                                                        MFDataType.MFDatatypeLookup,
-                                                                        grupo.ConfigurationWorkflow.WorkflowChecklist.WorkflowValidacionesChecklist.ID
-                                                                    );
-                                                                    sbDocumentosEmpleadosLO.Property
-                                                                    (
-                                                                        MFBuiltInPropertyDef.MFBuiltInPropertyDefState,
-                                                                        MFDataType.MFDatatypeLookup,
-                                                                        grupo.ConfigurationWorkflow.WorkflowChecklist.EstadoDocumentoProcesado.ID
-                                                                    );
+                                                                    //sbDocumentosEmpleadosLO.Property
+                                                                    //(
+                                                                    //    MFBuiltInPropertyDef.MFBuiltInPropertyDefWorkflow,
+                                                                    //    MFDataType.MFDatatypeLookup,
+                                                                    //    grupo.ConfigurationWorkflow.WorkflowChecklist.WorkflowValidacionesChecklist.ID
+                                                                    //);
+                                                                    //sbDocumentosEmpleadosLO.Property
+                                                                    //(
+                                                                    //    MFBuiltInPropertyDef.MFBuiltInPropertyDefState,
+                                                                    //    MFDataType.MFDatatypeLookup,
+                                                                    //    grupo.ConfigurationWorkflow.WorkflowChecklist.EstadoDocumentoProcesado.ID
+                                                                    //);
 
                                                                     var documentosCount = sbDocumentosEmpleadosLO.FindEx().Count;
                                                                     SysUtils.ReportInfoToEventLog("Documentos: " + documentosCount);
@@ -1502,7 +1522,11 @@ namespace Arkiva.MonitorFiscal.Checklist
                                                                                         pd_EstatusDocumento,
                                                                                         1,
                                                                                         grupo.ConfigurationWorkflow.WorkflowDocumentoEmpleado.WorkflowValidacionesDocEmpleado.ID,
-                                                                                        grupo.ConfigurationWorkflow.WorkflowDocumentoEmpleado.EstadoDocumentoVigenteEmpleado.ID
+                                                                                        grupo.ConfigurationWorkflow.WorkflowDocumentoEmpleado.EstadoDocumentoVigenteEmpleado.ID,
+                                                                                        0,
+                                                                                        documentoEmpleado,
+                                                                                        grupo.ConfigurationWorkflow.WorkflowChecklist.WorkflowValidacionesChecklist.ID,
+                                                                                        grupo.ConfigurationWorkflow.WorkflowChecklist.EstadoDocumentoProcesado.ID
                                                                                     );
                                                                                 }
                                                                                 else
@@ -1517,7 +1541,11 @@ namespace Arkiva.MonitorFiscal.Checklist
                                                                                         pd_EstatusDocumento,
                                                                                         2,
                                                                                         grupo.ConfigurationWorkflow.WorkflowChecklist.WorkflowValidacionesChecklist.ID,
-                                                                                        grupo.ConfigurationWorkflow.WorkflowChecklist.EstadoDocumentoVencido.ID
+                                                                                        grupo.ConfigurationWorkflow.WorkflowChecklist.EstadoDocumentoVencido.ID,
+                                                                                        0,
+                                                                                        documentoEmpleado,
+                                                                                        grupo.ConfigurationWorkflow.WorkflowChecklist.WorkflowValidacionesChecklist.ID,
+                                                                                        grupo.ConfigurationWorkflow.WorkflowChecklist.EstadoDocumentoProcesado.ID
                                                                                     );
                                                                                 }
                                                                             }
@@ -1550,7 +1578,11 @@ namespace Arkiva.MonitorFiscal.Checklist
                                                                                         pd_EstatusDocumento,
                                                                                         1,
                                                                                         grupo.ConfigurationWorkflow.WorkflowDocumentoEmpleado.WorkflowValidacionesDocEmpleado.ID,
-                                                                                        grupo.ConfigurationWorkflow.WorkflowDocumentoEmpleado.EstadoDocumentoVigenteEmpleado.ID
+                                                                                        grupo.ConfigurationWorkflow.WorkflowDocumentoEmpleado.EstadoDocumentoVigenteEmpleado.ID,
+                                                                                        0,
+                                                                                        documentoEmpleado,
+                                                                                        grupo.ConfigurationWorkflow.WorkflowChecklist.WorkflowValidacionesChecklist.ID,
+                                                                                        grupo.ConfigurationWorkflow.WorkflowChecklist.EstadoDocumentoProcesado.ID
                                                                                     );
                                                                                 }
                                                                                 else
@@ -1563,7 +1595,11 @@ namespace Arkiva.MonitorFiscal.Checklist
                                                                                         pd_EstatusDocumento,
                                                                                         2,
                                                                                         grupo.ConfigurationWorkflow.WorkflowChecklist.WorkflowValidacionesChecklist.ID,
-                                                                                        grupo.ConfigurationWorkflow.WorkflowChecklist.EstadoDocumentoVencido.ID
+                                                                                        grupo.ConfigurationWorkflow.WorkflowChecklist.EstadoDocumentoVencido.ID,
+                                                                                        0,
+                                                                                        documentoEmpleado,
+                                                                                        grupo.ConfigurationWorkflow.WorkflowChecklist.WorkflowValidacionesChecklist.ID,
+                                                                                        grupo.ConfigurationWorkflow.WorkflowChecklist.EstadoDocumentoProcesado.ID
                                                                                     );
                                                                                 }
                                                                             }                                                                            
@@ -2322,7 +2358,7 @@ namespace Arkiva.MonitorFiscal.Checklist
             return resultado;
         }
 
-        private void ActualizarEstatusDocumento(string sTipoObjeto, ObjVer oObjVer, int iPropertyDefEstatus, int iEstatusIdValue, int iWorkflow, int iWorkflowState, int iObjectTypeNoDocumento = 0)
+        private void ActualizarEstatusDocumento(string sTipoObjeto, ObjVer oObjVer, int iPropertyDefEstatus, int iEstatusIdValue, int iWorkflow, int iState, int iObjectTypeNoDocumento = 0, ObjVerEx oObjVerEx = null, int iWorkflowValidacionesChecklist = 0, int iStateDocumentoProcesado = 0)
         {
             var oWorkflowstate = new ObjectVersionWorkflowState();
             var oLookup = new Lookup();
@@ -2365,10 +2401,29 @@ namespace Arkiva.MonitorFiscal.Checklist
 
             if (sTipoObjeto == "Documento")
             {
-                // Actualizar el estado del workflow "Validaciones REPSE" dentro del documento
-                oWorkflowstate.Workflow.TypedValue.SetValue(MFDataType.MFDatatypeLookup, iWorkflow);
-                oWorkflowstate.State.TypedValue.SetValue(MFDataType.MFDatatypeLookup, iWorkflowState);
-                PermanentVault.ObjectPropertyOperations.SetWorkflowStateEx(checkedOutObjectVersion, oWorkflowstate);
+                if (iEstatusIdValue == 1) // Si el documento esta vigente, validar el estado de workflow para moverlo
+                {
+                    var documentoProperties = oObjVerEx.Properties;
+                    var pdWorkflow = oObjVerEx.Vault.PropertyDefOperations.GetBuiltInPropertyDef(MFBuiltInPropertyDef.MFBuiltInPropertyDefWorkflow);
+                    var pdState = oObjVerEx.Vault.PropertyDefOperations.GetBuiltInPropertyDef(MFBuiltInPropertyDef.MFBuiltInPropertyDefState);
+                    var iWorkflowDocumento = documentoProperties.SearchForPropertyEx(pdWorkflow.ID, true).TypedValue.GetLookupID();
+                    var iStateDocumento = documentoProperties.SearchForPropertyEx(pdState.ID, true).TypedValue.GetLookupID();
+
+                    if (iWorkflowDocumento == iWorkflowValidacionesChecklist && iStateDocumento == iStateDocumentoProcesado)
+                    {
+                        // Actualizar el estado del workflow "Validaciones REPSE" dentro del documento
+                        oWorkflowstate.Workflow.TypedValue.SetValue(MFDataType.MFDatatypeLookup, iWorkflow);
+                        oWorkflowstate.State.TypedValue.SetValue(MFDataType.MFDatatypeLookup, iState);
+                        PermanentVault.ObjectPropertyOperations.SetWorkflowStateEx(checkedOutObjectVersion, oWorkflowstate);
+                    }
+                }
+                else // Si el documento esta Vencido, siempre moverlo al estado Documento Vencido del Workflow Validaciones Checklist
+                {
+                    // Actualizar el estado del workflow "Validaciones REPSE" dentro del documento
+                    oWorkflowstate.Workflow.TypedValue.SetValue(MFDataType.MFDatatypeLookup, iWorkflow);
+                    oWorkflowstate.State.TypedValue.SetValue(MFDataType.MFDatatypeLookup, iState);
+                    PermanentVault.ObjectPropertyOperations.SetWorkflowStateEx(checkedOutObjectVersion, oWorkflowstate);
+                }                                
             }            
 
             PermanentVault.ObjectOperations.CheckIn(checkedOutObjectVersion);
