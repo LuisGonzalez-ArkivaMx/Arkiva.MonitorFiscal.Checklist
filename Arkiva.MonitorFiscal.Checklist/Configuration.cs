@@ -304,6 +304,10 @@ namespace Arkiva.MonitorFiscal.Checklist
         [DataMember]
         [JsonConfEditor(Label = "Validaciones documento empleado")]
         public WorkflowDocumentoEmpleado WorkflowDocumentoEmpleado { get; set; }
+
+        [DataMember]
+        [JsonConfEditor(Label = "Validacion manual de documento")]
+        public WorkflowValidacionManual WorkflowValidacionManual { get; set; }
     }
 
     [DataContract]
@@ -356,5 +360,24 @@ namespace Arkiva.MonitorFiscal.Checklist
         [DataMember]
         [JsonConfEditor(Label = "Documento vigente")]
         public MFIdentifier EstadoDocumentoVigenteEmpleado { get; set; }
+    }
+
+    [DataContract]
+    public class WorkflowValidacionManual
+    {
+        [MFWorkflow]
+        [JsonConfEditor(Label = "Flujo de trabajo")]
+        [DataMember]
+        public MFIdentifier WorkflowValidacionManualDocumento { get; set; }
+
+        [MFState]
+        [DataMember]
+        [JsonConfEditor(Label = "Documento valido")]
+        public MFIdentifier EstadoDocumentoValido { get; set; }
+
+        [MFState]
+        [DataMember]
+        [JsonConfEditor(Label = "Documento no valido")]
+        public MFIdentifier EstadoDocumentoNoValido { get; set; }
     }
 }
