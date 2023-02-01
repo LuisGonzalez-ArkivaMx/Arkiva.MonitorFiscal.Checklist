@@ -376,6 +376,7 @@ namespace Arkiva.MonitorFiscal.Checklist
                                                                 SysUtils.ReportInfoToEventLog("Documento: " + documentoProveedor.Title + ", ID: " + documentoProveedor.ObjVer.ID);
 
                                                                 bool bValidacionManual = false;
+                                                                int classWorkflow = 0;
 
                                                                 oPropertyValues = PermanentVault
                                                                     .ObjectPropertyOperations
@@ -419,7 +420,7 @@ namespace Arkiva.MonitorFiscal.Checklist
                                                                     .GetBuiltInPropertyDef(MFBuiltInPropertyDef.MFBuiltInPropertyDefWorkflow)
                                                                     .ID;
 
-                                                                var classWorkflow = oPropertyValues.SearchForPropertyEx(iWorkflow, true).TypedValue.GetLookupID();
+                                                                classWorkflow = oPropertyValues.SearchForPropertyEx(iWorkflow, true).TypedValue.GetLookupID();
 
                                                                 if (classWorkflow == grupo.ConfigurationWorkflow.WorkflowValidacionManual.WorkflowValidacionManualDocumento.ID)
                                                                 {
