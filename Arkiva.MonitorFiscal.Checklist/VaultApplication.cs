@@ -422,10 +422,13 @@ namespace Arkiva.MonitorFiscal.Checklist
 
                                                                 classWorkflow = oPropertyValues.SearchForPropertyEx(iWorkflow, true).TypedValue.GetLookupID();
 
-                                                                if (classWorkflow == grupo.ConfigurationWorkflow.WorkflowValidacionManual.WorkflowValidacionManualDocumento.ID)
+                                                                if (classWorkflow > 0)
                                                                 {
-                                                                    bValidacionManual = true;
-                                                                }
+                                                                    if (classWorkflow == grupo.ConfigurationWorkflow.WorkflowValidacionManual.WorkflowValidacionManualDocumento.ID)
+                                                                    {
+                                                                        bValidacionManual = true;
+                                                                    }
+                                                                }                                                                
 
                                                                 // Obtener fecha del documento
                                                                 var oFechaDeDocumento = oPropertyValues
@@ -924,9 +927,12 @@ namespace Arkiva.MonitorFiscal.Checklist
 
                                                             classWorkflow = oPropertyValues.SearchForPropertyEx(iWorkflow, true).TypedValue.GetLookupID();
 
-                                                            if (classWorkflow == grupo.ConfigurationWorkflow.WorkflowValidacionManual.WorkflowValidacionManualDocumento.ID)
+                                                            if (classWorkflow > 0)
                                                             {
-                                                                bValidacionManual = true;
+                                                                if (classWorkflow == grupo.ConfigurationWorkflow.WorkflowValidacionManual.WorkflowValidacionManualDocumento.ID)
+                                                                {
+                                                                    bValidacionManual = true;
+                                                                }
                                                             }
 
                                                             if (bValidacionManual == false)
