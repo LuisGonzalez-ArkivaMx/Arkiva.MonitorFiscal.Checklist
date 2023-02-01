@@ -109,6 +109,14 @@ namespace Arkiva.MonitorFiscal.Checklist
                                     .PropertyDefOperations
                                     .GetPropertyDefIDByAlias("PD.EstatusProveedorLeyOutsourcing");
 
+                                var pd_ValidacionManual = PermanentVault
+                                    .PropertyDefOperations
+                                    .GetPropertyDefIDByAlias("PD.ValidacionManual");
+
+                                var pd_EstadoValidacionManual = PermanentVault
+                                    .PropertyDefOperations
+                                    .GetPropertyDefIDByAlias("PD.EstadoValidacionManual");
+
                                 var searchBuilderOrganizacion = new MFSearchBuilder(PermanentVault);
                                 searchBuilderOrganizacion.Deleted(false);
 
@@ -373,6 +381,37 @@ namespace Arkiva.MonitorFiscal.Checklist
                                                                     .ObjectPropertyOperations
                                                                     .GetProperties(documentoProveedor.ObjVer);
 
+                                                                // Validar checkbox de validacion manual
+                                                                if (oPropertyValues.IndexOf(pd_ValidacionManual) != -1)
+                                                                {
+                                                                    var validacionManual = Convert.ToBoolean(oPropertyValues.SearchForPropertyEx(pd_ValidacionManual, true).TypedValue.Value);
+
+                                                                    if (validacionManual == true)
+                                                                    {
+                                                                        var estadoValidacionManual = oPropertyValues.SearchForPropertyEx(pd_EstadoValidacionManual, true).TypedValue.GetLookupID();
+
+                                                                        if (estadoValidacionManual == 3) // Documento Validado
+                                                                        {
+                                                                            ActualizarWorkflowValidacionManual
+                                                                            (
+                                                                                documentoProveedor,
+                                                                                grupo.ConfigurationWorkflow.WorkflowValidacionManual.WorkflowValidacionManualDocumento.ID,
+                                                                                grupo.ConfigurationWorkflow.WorkflowValidacionManual.EstadoDocumentoValido.ID
+                                                                            );
+                                                                        }
+
+                                                                        if (estadoValidacionManual == 4) // Documento No Validado
+                                                                        {
+                                                                            ActualizarWorkflowValidacionManual
+                                                                            (
+                                                                                documentoProveedor,
+                                                                                grupo.ConfigurationWorkflow.WorkflowValidacionManual.WorkflowValidacionManualDocumento.ID,
+                                                                                grupo.ConfigurationWorkflow.WorkflowValidacionManual.EstadoDocumentoNoValido.ID
+                                                                            );
+                                                                        }
+                                                                    }
+                                                                }
+
                                                                 // Validar si el documento es para validacion manual
                                                                 var iWorkflow = documentoProveedor
                                                                     .Vault
@@ -557,8 +596,8 @@ namespace Arkiva.MonitorFiscal.Checklist
                                                                             grupo.ConfigurationWorkflow.WorkflowDocumentoProveedor.EstadoDocumentoVigenteProveedor.ID,
                                                                             0,
                                                                             documentoProveedor,
-                                                                            grupo.ConfigurationWorkflow.WorkflowChecklist.WorkflowValidacionesChecklist.ID,
-                                                                            grupo.ConfigurationWorkflow.WorkflowChecklist.EstadoDocumentoProcesado.ID
+                                                                            grupo.ConfigurationWorkflow.WorkflowValidacionManual.WorkflowValidacionManualDocumento.ID,
+                                                                            grupo.ConfigurationWorkflow.WorkflowValidacionManual.EstadoDocumentoValido.ID
                                                                         );
                                                                     }
                                                                 }                                                                
@@ -843,6 +882,37 @@ namespace Arkiva.MonitorFiscal.Checklist
                                                                 .ObjectPropertyOperations
                                                                 .GetProperties(documentoProveedor.ObjVer);
 
+                                                            // Validar checkbox de validacion manual
+                                                            if (oPropertyValues.IndexOf(pd_ValidacionManual) != -1)
+                                                            {
+                                                                var validacionManual = Convert.ToBoolean(oPropertyValues.SearchForPropertyEx(pd_ValidacionManual, true).TypedValue.Value);
+
+                                                                if (validacionManual == true)
+                                                                {
+                                                                    var estadoValidacionManual = oPropertyValues.SearchForPropertyEx(pd_EstadoValidacionManual, true).TypedValue.GetLookupID();
+
+                                                                    if (estadoValidacionManual == 3) // Documento Validado
+                                                                    {
+                                                                        ActualizarWorkflowValidacionManual
+                                                                        (
+                                                                            documentoProveedor,
+                                                                            grupo.ConfigurationWorkflow.WorkflowValidacionManual.WorkflowValidacionManualDocumento.ID,
+                                                                            grupo.ConfigurationWorkflow.WorkflowValidacionManual.EstadoDocumentoValido.ID
+                                                                        );
+                                                                    }
+
+                                                                    if (estadoValidacionManual == 4) // Documento No Validado
+                                                                    {
+                                                                        ActualizarWorkflowValidacionManual
+                                                                        (
+                                                                            documentoProveedor,
+                                                                            grupo.ConfigurationWorkflow.WorkflowValidacionManual.WorkflowValidacionManualDocumento.ID,
+                                                                            grupo.ConfigurationWorkflow.WorkflowValidacionManual.EstadoDocumentoNoValido.ID
+                                                                        );
+                                                                    }
+                                                                }
+                                                            }
+
                                                             // Validar si el documento es para validacion manual
                                                             var iWorkflow = documentoProveedor
                                                                 .Vault
@@ -919,8 +989,8 @@ namespace Arkiva.MonitorFiscal.Checklist
                                                                         grupo.ConfigurationWorkflow.WorkflowDocumentoProveedor.EstadoDocumentoVigenteProveedor.ID,
                                                                         0,
                                                                         documentoProveedor,
-                                                                        grupo.ConfigurationWorkflow.WorkflowChecklist.WorkflowValidacionesChecklist.ID,
-                                                                        grupo.ConfigurationWorkflow.WorkflowChecklist.EstadoDocumentoProcesado.ID
+                                                                        grupo.ConfigurationWorkflow.WorkflowValidacionManual.WorkflowValidacionManualDocumento.ID,
+                                                                        grupo.ConfigurationWorkflow.WorkflowValidacionManual.EstadoDocumentoValido.ID
                                                                     );
                                                                 }
                                                             }
@@ -2498,6 +2568,27 @@ namespace Arkiva.MonitorFiscal.Checklist
             }
 
             return resultado;
+        }
+
+        private void ActualizarWorkflowValidacionManual(ObjVerEx oObjVerEx, int iWorkflow, int iState)
+        {
+            var oWorkflowstate = new ObjectVersionWorkflowState();
+            var oObjID = new ObjID();
+
+            oObjID.SetIDs
+            (
+                ObjType: (int)MFBuiltInObjectType.MFBuiltInObjectTypeDocument,
+                ID: oObjVerEx.ObjVer.ID
+            );
+
+            ObjVer checkedOutObjectVersion = oObjVerEx.Vault.ObjectOperations.GetLatestObjVerEx(oObjID, true);
+            checkedOutObjectVersion = oObjVerEx.Vault.ObjectOperations.CheckOut(oObjID).ObjVer;
+
+            oWorkflowstate.Workflow.TypedValue.SetValue(MFDataType.MFDatatypeLookup, iWorkflow);
+            oWorkflowstate.State.TypedValue.SetValue(MFDataType.MFDatatypeLookup, iState);
+            oObjVerEx.Vault.ObjectPropertyOperations.SetWorkflowStateEx(checkedOutObjectVersion, oWorkflowstate);
+
+            oObjVerEx.Vault.ObjectOperations.CheckIn(checkedOutObjectVersion);
         }
 
         private void ActualizarEstatusDocumento(string sTipoObjeto, ObjVer oObjVer, int iPropertyDefEstatus, int iEstatusIdValue, int iWorkflow, int iState, int iObjectTypeNoDocumento = 0, ObjVerEx oObjVerEx = null, int iWorkflowValidacionesChecklist = 0, int iStateDocumentoProcesado = 0)
