@@ -391,7 +391,7 @@ namespace Arkiva.MonitorFiscal.Checklist
                                                                     {
                                                                         bool bValidacionManualValue = Convert.ToBoolean(validacionManual);
 
-                                                                        if (bValidacionManualValue != true)
+                                                                        if (bValidacionManualValue == true)
                                                                         {
                                                                             var estadoValidacionManual = oPropertyValues.SearchForPropertyEx(pd_EstadoValidacionManual, true).TypedValue.GetLookupID();
 
@@ -898,7 +898,7 @@ namespace Arkiva.MonitorFiscal.Checklist
                                                                 {
                                                                     bool bValidacionManualValue = Convert.ToBoolean(validacionManual);
 
-                                                                    if (bValidacionManualValue != true)
+                                                                    if (bValidacionManualValue == true)
                                                                     {
                                                                         var estadoValidacionManual = oPropertyValues.SearchForPropertyEx(pd_EstadoValidacionManual, true).TypedValue.GetLookupID();
 
@@ -1709,7 +1709,7 @@ namespace Arkiva.MonitorFiscal.Checklist
                                                                                 {
                                                                                     bool bValidacionManualValue = Convert.ToBoolean(validacionManual);
 
-                                                                                    if (bValidacionManualValue != true)
+                                                                                    if (bValidacionManualValue == true)
                                                                                     {
                                                                                         var estadoValidacionManual = oPropertyValues.SearchForPropertyEx(pd_EstadoValidacionManual, true).TypedValue.GetLookupID();
 
