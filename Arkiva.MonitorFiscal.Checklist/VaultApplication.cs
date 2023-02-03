@@ -430,33 +430,33 @@ namespace Arkiva.MonitorFiscal.Checklist
                                                                 if (classWorkflow == grupo.ConfigurationWorkflow.WorkflowValidacionManual.WorkflowValidacionManualDocumento.ID)
                                                                 {
                                                                     bDocumentoValidacionManual = true;
-                                                                }
-
-                                                                // Obtener fecha del documento
-                                                                var oFechaDeDocumento = oPropertyValues
-                                                                    .SearchForPropertyEx(grupo.FechaDeDocumento, true)
-                                                                    .TypedValue
-                                                                    .Value;                                                                
-
-                                                                DateTime dtFechaDeDocumento = Convert.ToDateTime(oFechaDeDocumento);
-
-                                                                string sFechaDeDocumento = dtFechaDeDocumento.ToString("yyyy-MM-dd");
-
-                                                                DateTime? dtFechaFinVigencia = null;
-
-                                                                // Si existe la propiedad en la metadata del documento
-                                                                if (oPropertyValues.IndexOf(grupo.FechaFinVigencia) != -1)
-                                                                {
-                                                                    if (!oPropertyValues.SearchForPropertyEx(grupo.FechaFinVigencia, true).TypedValue.IsNULL())
-                                                                    {
-                                                                        // Obtener fecha fin de vigencia
-                                                                        var oFechaFinVigencia = oPropertyValues.SearchForPropertyEx(grupo.FechaFinVigencia, true).TypedValue.Value;
-                                                                        dtFechaFinVigencia = Convert.ToDateTime(oFechaFinVigencia);
-                                                                    }
-                                                                }     
+                                                                }                                                                     
                                                                 
                                                                 if (bDocumentoValidacionManual == false)
                                                                 {
+                                                                    // Obtener fecha del documento
+                                                                    var oFechaDeDocumento = oPropertyValues
+                                                                        .SearchForPropertyEx(grupo.FechaDeDocumento, true)
+                                                                        .TypedValue
+                                                                        .Value;
+
+                                                                    DateTime dtFechaDeDocumento = Convert.ToDateTime(oFechaDeDocumento);
+
+                                                                    string sFechaDeDocumento = dtFechaDeDocumento.ToString("yyyy-MM-dd");
+
+                                                                    DateTime? dtFechaFinVigencia = null;
+
+                                                                    // Si existe la propiedad en la metadata del documento
+                                                                    if (oPropertyValues.IndexOf(grupo.FechaFinVigencia) != -1)
+                                                                    {
+                                                                        if (!oPropertyValues.SearchForPropertyEx(grupo.FechaFinVigencia, true).TypedValue.IsNULL())
+                                                                        {
+                                                                            // Obtener fecha fin de vigencia
+                                                                            var oFechaFinVigencia = oPropertyValues.SearchForPropertyEx(grupo.FechaFinVigencia, true).TypedValue.Value;
+                                                                            dtFechaFinVigencia = Convert.ToDateTime(oFechaFinVigencia);
+                                                                        }
+                                                                    }
+
                                                                     if (claseDocumento.TipoValidacionVigenciaDocumento == "Por periodo")
                                                                     {
                                                                         // Validar si la fecha del documento esta dentro del periodo obtenido
