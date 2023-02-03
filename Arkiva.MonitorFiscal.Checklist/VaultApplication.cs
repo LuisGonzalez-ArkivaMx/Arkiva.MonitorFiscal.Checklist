@@ -358,6 +358,8 @@ namespace Arkiva.MonitorFiscal.Checklist
 
                                                 if (searchBuilderDocumentosProveedor.FindEx().Count > 0) // Se encontro al menos un documento
                                                 {
+                                                    var listDocumentosValidacionManualTerminado = new List<ObjVerEx>();
+
                                                     if (claseDocumento.VigenciaDocumentoProveedor != "No Aplica")
                                                     {
                                                         // Validar fecha fin contra la fecha actual                                            
@@ -613,6 +615,35 @@ namespace Arkiva.MonitorFiscal.Checklist
                                                                             grupo.ConfigurationWorkflow.WorkflowValidacionManual.EstadoDocumentoValido.ID
                                                                         );
                                                                     }
+
+                                                                    // Mover el documento al estado de validacion manual terminado
+                                                                    var oLookup = new Lookup();
+                                                                    var oObjID = new ObjID();
+
+                                                                    oObjID.SetIDs
+                                                                    (
+                                                                        ObjType: (int)MFBuiltInObjectType.MFBuiltInObjectTypeDocument,
+                                                                        ID: documentoProveedor.ID
+                                                                    );
+
+                                                                    var checkedOutObjectVersion = documentoProveedor.Vault.ObjectOperations.CheckOut(oObjID);
+
+                                                                    var oPropertyValue = new PropertyValue
+                                                                    {
+                                                                        PropertyDef = pd_EstadoValidacionManual
+                                                                    };
+
+                                                                    oLookup.Item = 5; // Terminado
+
+                                                                    oPropertyValue.TypedValue.SetValueToLookup(oLookup);
+
+                                                                    documentoProveedor.Vault.ObjectPropertyOperations.SetProperty
+                                                                    (
+                                                                        ObjVer: checkedOutObjectVersion.ObjVer,
+                                                                        PropertyValue: oPropertyValue
+                                                                    );
+
+                                                                    documentoProveedor.Vault.ObjectOperations.CheckIn(checkedOutObjectVersion.ObjVer);
                                                                 }                                                                
 
                                                                 if (claseDocumento.TipoDocumentoChecklist == "Comprobante de pago")
@@ -821,20 +852,23 @@ namespace Arkiva.MonitorFiscal.Checklist
                                                                     .TypedValue
                                                                     .Value;
 
-                                                                    // Comparar fecha de documentos (misma clase de documento) encontrados
-                                                                    // Obtener el documento mas reciente y vigente
-                                                                    if (sComparaFecha1 == "")
+                                                                    if (oFechaDocumento != null)
                                                                     {
-                                                                        dtFecha1 = Convert.ToDateTime(oFechaDocumento);
-                                                                        sComparaFecha1 = dtFecha1.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture);
-                                                                        objVerDocumento1 = documento;
-                                                                    }
-                                                                    else
-                                                                    {
-                                                                        dtFecha2 = Convert.ToDateTime(oFechaDocumento);
-                                                                        sComparaFecha2 = dtFecha2.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture);
-                                                                        objVerDocumento2 = documento;
-                                                                    }
+                                                                        // Comparar fecha de documentos (misma clase de documento) encontrados
+                                                                        // Obtener el documento mas reciente y vigente
+                                                                        if (sComparaFecha1 == "")
+                                                                        {
+                                                                            dtFecha1 = Convert.ToDateTime(oFechaDocumento);
+                                                                            sComparaFecha1 = dtFecha1.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture);
+                                                                            objVerDocumento1 = documento;
+                                                                        }
+                                                                        else
+                                                                        {
+                                                                            dtFecha2 = Convert.ToDateTime(oFechaDocumento);
+                                                                            sComparaFecha2 = dtFecha2.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture);
+                                                                            objVerDocumento2 = documento;
+                                                                        }
+                                                                    }                                                                    
 
                                                                     if (sComparaFecha1 != "" && sComparaFecha2 != "")
                                                                     {
@@ -1013,6 +1047,35 @@ namespace Arkiva.MonitorFiscal.Checklist
                                                                     );
                                                                 }
                                                             }
+
+                                                            // Mover el documento al estado de validacion manual terminado
+                                                            var oLookup = new Lookup();
+                                                            var oObjID = new ObjID();
+
+                                                            oObjID.SetIDs
+                                                            (
+                                                                ObjType: (int)MFBuiltInObjectType.MFBuiltInObjectTypeDocument,
+                                                                ID: documentoProveedor.ID
+                                                            );
+
+                                                            var checkedOutObjectVersion = documentoProveedor.Vault.ObjectOperations.CheckOut(oObjID);
+
+                                                            var oPropertyValue = new PropertyValue
+                                                            {
+                                                                PropertyDef = pd_EstadoValidacionManual
+                                                            };
+
+                                                            oLookup.Item = 5; // Terminado
+
+                                                            oPropertyValue.TypedValue.SetValueToLookup(oLookup);
+
+                                                            documentoProveedor.Vault.ObjectPropertyOperations.SetProperty
+                                                            (
+                                                                ObjVer: checkedOutObjectVersion.ObjVer,
+                                                                PropertyValue: oPropertyValue
+                                                            );
+
+                                                            documentoProveedor.Vault.ObjectOperations.CheckIn(checkedOutObjectVersion.ObjVer);
                                                         }
                                                     }
                                                 }
@@ -1418,20 +1481,23 @@ namespace Arkiva.MonitorFiscal.Checklist
                                                                             .TypedValue
                                                                             .Value;
 
-                                                                        // Comparar fecha de documentos (misma clase de documento) encontrados
-                                                                        // Obtener el documento mas reciente y vigente
-                                                                        if (sComparaFecha1 == "")
+                                                                        if (fechaEmisionDocumentoCD != null)
                                                                         {
-                                                                            dtFecha1 = Convert.ToDateTime(fechaEmisionDocumentoCD);
-                                                                            sComparaFecha1 = dtFecha1.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture);
-                                                                            objVerDocumento1 = documentoEmpleado.ObjVer;
-                                                                        }
-                                                                        else
-                                                                        {
-                                                                            dtFecha2 = Convert.ToDateTime(fechaEmisionDocumentoCD);
-                                                                            sComparaFecha2 = dtFecha2.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture);
-                                                                            objVerDocumento2 = documentoEmpleado.ObjVer;
-                                                                        }
+                                                                            // Comparar fecha de documentos (misma clase de documento) encontrados
+                                                                            // Obtener el documento mas reciente y vigente
+                                                                            if (sComparaFecha1 == "")
+                                                                            {
+                                                                                dtFecha1 = Convert.ToDateTime(fechaEmisionDocumentoCD);
+                                                                                sComparaFecha1 = dtFecha1.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture);
+                                                                                objVerDocumento1 = documentoEmpleado.ObjVer;
+                                                                            }
+                                                                            else
+                                                                            {
+                                                                                dtFecha2 = Convert.ToDateTime(fechaEmisionDocumentoCD);
+                                                                                sComparaFecha2 = dtFecha2.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture);
+                                                                                objVerDocumento2 = documentoEmpleado.ObjVer;
+                                                                            }
+                                                                        }                                                                        
 
                                                                         if (sComparaFecha1 != "" && sComparaFecha2 != "")
                                                                         {
@@ -1703,6 +1769,9 @@ namespace Arkiva.MonitorFiscal.Checklist
                                                                     {
                                                                         foreach (var documentoEmpleado in sbDocumentosEmpleadosLO.FindEx())
                                                                         {
+                                                                            bool bDocumentoValidacionManual = false;
+                                                                            int classWorkflow = 0;
+
                                                                             oPropertyValues = PermanentVault
                                                                                 .ObjectPropertyOperations
                                                                                 .GetProperties(documentoEmpleado.ObjVer);
@@ -1743,35 +1812,21 @@ namespace Arkiva.MonitorFiscal.Checklist
                                                                                 }                                                                                
                                                                             }
 
-                                                                            var iState = documentoEmpleado
+                                                                            // Validar si el documento es para validacion manual
+                                                                            var iWorkflow = documentoEmpleado
                                                                                 .Vault
                                                                                 .PropertyDefOperations
-                                                                                .GetBuiltInPropertyDef(MFBuiltInPropertyDef.MFBuiltInPropertyDefState)
+                                                                                .GetBuiltInPropertyDef(MFBuiltInPropertyDef.MFBuiltInPropertyDefWorkflow)
                                                                                 .ID;
 
-                                                                            var classState = oPropertyValues.SearchForPropertyEx(iState, true).TypedValue.GetLookupID();
+                                                                            classWorkflow = oPropertyValues.SearchForPropertyEx(iWorkflow, true).TypedValue.GetLookupID();
 
-                                                                            if (classState == grupo.ConfigurationWorkflow.WorkflowValidacionManual.EstadoDocumentoNoValido.ID)
+                                                                            if (classWorkflow == grupo.ConfigurationWorkflow.WorkflowValidacionManual.WorkflowValidacionManualDocumento.ID)
                                                                             {
-                                                                                oDocumentosVencidos.Add(documentoEmpleado.ObjVer);
-
-                                                                                // Agregar el estatus "Vencido" al documento
-                                                                                ActualizarEstatusDocumento
-                                                                                (
-                                                                                    "Documento",
-                                                                                    documentoEmpleado.ObjVer,
-                                                                                    pd_EstatusDocumento,
-                                                                                    2,
-                                                                                    grupo.ConfigurationWorkflow.WorkflowChecklist.WorkflowValidacionesChecklist.ID,
-                                                                                    grupo.ConfigurationWorkflow.WorkflowChecklist.EstadoDocumentoVencido.ID,
-                                                                                    0,
-                                                                                    documentoEmpleado,
-                                                                                    grupo.ConfigurationWorkflow.WorkflowChecklist.WorkflowValidacionesChecklist.ID,
-                                                                                    grupo.ConfigurationWorkflow.WorkflowChecklist.EstadoDocumentoProcesado.ID
-                                                                                );
+                                                                                bDocumentoValidacionManual = true;
                                                                             }
 
-                                                                            if (classState == grupo.ConfigurationWorkflow.WorkflowValidacionManual.EstadoDocumentoValido.ID)
+                                                                            if (bDocumentoValidacionManual == false)
                                                                             {
                                                                                 // Invocar fecha de pago de CFDI Nomina
                                                                                 var pd_FechaDePago = PermanentVault
@@ -1906,8 +1961,87 @@ namespace Arkiva.MonitorFiscal.Checklist
                                                                                 else
                                                                                 {
                                                                                     SysUtils.ReportInfoToEventLog("No hay fecha de documento en: ", documentoEmpleado.Title);
-                                                                                }                                                                                
-                                                                            }                                                                                                                                                        
+                                                                                }
+                                                                            }
+                                                                            else // Validacion manual es true
+                                                                            {
+                                                                                var iState = documentoEmpleado
+                                                                                .Vault
+                                                                                .PropertyDefOperations
+                                                                                .GetBuiltInPropertyDef(MFBuiltInPropertyDef.MFBuiltInPropertyDefState)
+                                                                                .ID;
+
+                                                                                var classState = oPropertyValues.SearchForPropertyEx(iState, true).TypedValue.GetLookupID();
+
+                                                                                if (classState == grupo.ConfigurationWorkflow.WorkflowValidacionManual.EstadoDocumentoNoValido.ID)
+                                                                                {
+                                                                                    oDocumentosVencidos.Add(documentoEmpleado.ObjVer);
+
+                                                                                    // Agregar el estatus "Vencido" al documento
+                                                                                    ActualizarEstatusDocumento
+                                                                                    (
+                                                                                        "Documento",
+                                                                                        documentoEmpleado.ObjVer,
+                                                                                        pd_EstatusDocumento,
+                                                                                        2,
+                                                                                        grupo.ConfigurationWorkflow.WorkflowChecklist.WorkflowValidacionesChecklist.ID,
+                                                                                        grupo.ConfigurationWorkflow.WorkflowChecklist.EstadoDocumentoVencido.ID,
+                                                                                        0,
+                                                                                        documentoEmpleado,
+                                                                                        grupo.ConfigurationWorkflow.WorkflowChecklist.WorkflowValidacionesChecklist.ID,
+                                                                                        grupo.ConfigurationWorkflow.WorkflowChecklist.EstadoDocumentoProcesado.ID
+                                                                                    );
+                                                                                }
+
+                                                                                if (classState == grupo.ConfigurationWorkflow.WorkflowValidacionManual.EstadoDocumentoValido.ID)
+                                                                                {
+                                                                                    oDocumentosVigentesPorValidar.Add(documentoEmpleado.ObjVer);
+
+                                                                                    // Actualizar el estatus "Vigente" al documento
+                                                                                    ActualizarEstatusDocumento
+                                                                                    (
+                                                                                        "Documento",
+                                                                                        documentoEmpleado.ObjVer,
+                                                                                        pd_EstatusDocumento,
+                                                                                        1,
+                                                                                        grupo.ConfigurationWorkflow.WorkflowDocumentoEmpleado.WorkflowValidacionesDocEmpleado.ID,
+                                                                                        grupo.ConfigurationWorkflow.WorkflowDocumentoEmpleado.EstadoDocumentoVigenteEmpleado.ID,
+                                                                                        0,
+                                                                                        documentoEmpleado,
+                                                                                        grupo.ConfigurationWorkflow.WorkflowChecklist.WorkflowValidacionesChecklist.ID,
+                                                                                        grupo.ConfigurationWorkflow.WorkflowChecklist.EstadoDocumentoProcesado.ID
+                                                                                    );
+                                                                                }
+
+                                                                                // Mover el documento al estado de validacion manual terminado
+                                                                                var oLookup = new Lookup();
+                                                                                var oObjID = new ObjID();
+
+                                                                                oObjID.SetIDs
+                                                                                (
+                                                                                    ObjType: (int)MFBuiltInObjectType.MFBuiltInObjectTypeDocument,
+                                                                                    ID: documentoEmpleado.ID
+                                                                                );
+
+                                                                                var checkedOutObjectVersion = documentoEmpleado.Vault.ObjectOperations.CheckOut(oObjID);
+
+                                                                                var oPropertyValue = new PropertyValue
+                                                                                {
+                                                                                    PropertyDef = pd_EstadoValidacionManual
+                                                                                };
+
+                                                                                oLookup.Item = 5; // Terminado
+
+                                                                                oPropertyValue.TypedValue.SetValueToLookup(oLookup);
+
+                                                                                documentoEmpleado.Vault.ObjectPropertyOperations.SetProperty
+                                                                                (
+                                                                                    ObjVer: checkedOutObjectVersion.ObjVer,
+                                                                                    PropertyValue: oPropertyValue
+                                                                                );
+
+                                                                                documentoEmpleado.Vault.ObjectOperations.CheckIn(checkedOutObjectVersion.ObjVer);
+                                                                            }                                                                                                                                                                                                                                    
                                                                         }
 
                                                                         // Fecha inicio y fin del periodo validado
