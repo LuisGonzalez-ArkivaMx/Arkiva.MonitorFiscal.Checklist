@@ -440,122 +440,129 @@ namespace Arkiva.MonitorFiscal.Checklist
                                                                         .TypedValue
                                                                         .Value;
 
-                                                                    DateTime dtFechaDeDocumento = Convert.ToDateTime(oFechaDeDocumento);
-
-                                                                    string sFechaDeDocumento = dtFechaDeDocumento.ToString("yyyy-MM-dd");
-
-                                                                    DateTime? dtFechaFinVigencia = null;
-
-                                                                    // Si existe la propiedad en la metadata del documento
-                                                                    if (oPropertyValues.IndexOf(grupo.FechaFinVigencia) != -1)
+                                                                    if (oFechaDeDocumento != null)
                                                                     {
-                                                                        if (!oPropertyValues.SearchForPropertyEx(grupo.FechaFinVigencia, true).TypedValue.IsNULL())
+                                                                        DateTime dtFechaDeDocumento = Convert.ToDateTime(oFechaDeDocumento);
+
+                                                                        string sFechaDeDocumento = dtFechaDeDocumento.ToString("yyyy-MM-dd");
+
+                                                                        DateTime? dtFechaFinVigencia = null;
+
+                                                                        // Si existe la propiedad en la metadata del documento
+                                                                        if (oPropertyValues.IndexOf(grupo.FechaFinVigencia) != -1)
                                                                         {
-                                                                            // Obtener fecha fin de vigencia
-                                                                            var oFechaFinVigencia = oPropertyValues.SearchForPropertyEx(grupo.FechaFinVigencia, true).TypedValue.Value;
-                                                                            dtFechaFinVigencia = Convert.ToDateTime(oFechaFinVigencia);
+                                                                            if (!oPropertyValues.SearchForPropertyEx(grupo.FechaFinVigencia, true).TypedValue.IsNULL())
+                                                                            {
+                                                                                // Obtener fecha fin de vigencia
+                                                                                var oFechaFinVigencia = oPropertyValues.SearchForPropertyEx(grupo.FechaFinVigencia, true).TypedValue.Value;
+                                                                                dtFechaFinVigencia = Convert.ToDateTime(oFechaFinVigencia);
+                                                                            }
+                                                                        }
+
+                                                                        if (claseDocumento.TipoValidacionVigenciaDocumento == "Por periodo")
+                                                                        {
+                                                                            // Validar si la fecha del documento esta dentro del periodo obtenido
+                                                                            if (ComparaFechaBaseContraUnaFechaInicioYFechaFin(
+                                                                                sFechaDeDocumento,
+                                                                                dtFechaInicioPeriodo,
+                                                                                dtFechaFinPeriodo) == true)
+                                                                            {
+                                                                                oDocumentosVigentesPorValidar.Add(documentoProveedor.ObjVer);
+
+                                                                                // Actualizar el estatus "Vigente" al documento
+                                                                                ActualizarEstatusDocumento
+                                                                                (
+                                                                                    "Documento",
+                                                                                    documentoProveedor.ObjVer,
+                                                                                    pd_EstatusDocumento,
+                                                                                    1,
+                                                                                    grupo.ConfigurationWorkflow.WorkflowDocumentoProveedor.WorkflowValidacionesDocProveedor.ID,
+                                                                                    grupo.ConfigurationWorkflow.WorkflowDocumentoProveedor.EstadoDocumentoVigenteProveedor.ID,
+                                                                                    0,
+                                                                                    documentoProveedor,
+                                                                                    grupo.ConfigurationWorkflow.WorkflowChecklist.WorkflowValidacionesChecklist.ID,
+                                                                                    grupo.ConfigurationWorkflow.WorkflowChecklist.EstadoDocumentoProcesado.ID
+                                                                                );
+                                                                            }
+                                                                            else
+                                                                            {
+                                                                                oDocumentosVencidos.Add(documentoProveedor.ObjVer);
+
+                                                                                // Agregar el estatus "Vencido" al documento
+                                                                                ActualizarEstatusDocumento
+                                                                                (
+                                                                                    "Documento",
+                                                                                    documentoProveedor.ObjVer,
+                                                                                    pd_EstatusDocumento,
+                                                                                    2,
+                                                                                    grupo.ConfigurationWorkflow.WorkflowChecklist.WorkflowValidacionesChecklist.ID,
+                                                                                    grupo.ConfigurationWorkflow.WorkflowChecklist.EstadoDocumentoVencido.ID,
+                                                                                    0,
+                                                                                    documentoProveedor,
+                                                                                    grupo.ConfigurationWorkflow.WorkflowChecklist.WorkflowValidacionesChecklist.ID,
+                                                                                    grupo.ConfigurationWorkflow.WorkflowChecklist.EstadoDocumentoProcesado.ID
+                                                                                );
+                                                                            }
+                                                                        }
+                                                                        else if (claseDocumento.TipoValidacionVigenciaDocumento == "Por fecha de vigencia")
+                                                                        {
+                                                                            // Validar si la fecha del documento esta dentro del periodo obtenido
+                                                                            if (ComparaFechaBaseContraUnaFechaInicioYFechaFin(
+                                                                                sFechaDeDocumento,
+                                                                                dtFechaInicioPeriodo,
+                                                                                dtFechaFinPeriodo) == true)
+                                                                            {
+                                                                                oDocumentosVigentesPorValidar.Add(documentoProveedor.ObjVer);
+                                                                            }
+                                                                            else
+                                                                            {
+                                                                                oDocumentosVencidos.Add(documentoProveedor.ObjVer);
+                                                                            }
+
+                                                                            // Validar vigencia tomando como referencia el ultimo periodo
+                                                                            if (ValidarVigenciaDeDocumentoEnPeriodoActual(
+                                                                                claseDocumento.VigenciaDocumentoProveedor,
+                                                                                dtFechaDeDocumento,
+                                                                                dtFechaFinVigencia) == true)
+                                                                            {
+                                                                                // Actualizar el estatus "Vigente" al documento
+                                                                                ActualizarEstatusDocumento
+                                                                                (
+                                                                                    "Documento",
+                                                                                    documentoProveedor.ObjVer,
+                                                                                    pd_EstatusDocumento,
+                                                                                    1,
+                                                                                    grupo.ConfigurationWorkflow.WorkflowDocumentoProveedor.WorkflowValidacionesDocProveedor.ID,
+                                                                                    grupo.ConfigurationWorkflow.WorkflowDocumentoProveedor.EstadoDocumentoVigenteProveedor.ID,
+                                                                                    0,
+                                                                                    documentoProveedor,
+                                                                                    grupo.ConfigurationWorkflow.WorkflowChecklist.WorkflowValidacionesChecklist.ID,
+                                                                                    grupo.ConfigurationWorkflow.WorkflowChecklist.EstadoDocumentoProcesado.ID
+                                                                                );
+                                                                            }
+                                                                            else
+                                                                            {
+                                                                                // Agregar el estatus "Vencido" al documento
+                                                                                ActualizarEstatusDocumento
+                                                                                (
+                                                                                    "Documento",
+                                                                                    documentoProveedor.ObjVer,
+                                                                                    pd_EstatusDocumento,
+                                                                                    2,
+                                                                                    grupo.ConfigurationWorkflow.WorkflowChecklist.WorkflowValidacionesChecklist.ID,
+                                                                                    grupo.ConfigurationWorkflow.WorkflowChecklist.EstadoDocumentoVencido.ID,
+                                                                                    0,
+                                                                                    documentoProveedor,
+                                                                                    grupo.ConfigurationWorkflow.WorkflowChecklist.WorkflowValidacionesChecklist.ID,
+                                                                                    grupo.ConfigurationWorkflow.WorkflowChecklist.EstadoDocumentoProcesado.ID
+                                                                                );
+                                                                            }
                                                                         }
                                                                     }
-
-                                                                    if (claseDocumento.TipoValidacionVigenciaDocumento == "Por periodo")
+                                                                    else
                                                                     {
-                                                                        // Validar si la fecha del documento esta dentro del periodo obtenido
-                                                                        if (ComparaFechaBaseContraUnaFechaInicioYFechaFin(
-                                                                            sFechaDeDocumento,
-                                                                            dtFechaInicioPeriodo,
-                                                                            dtFechaFinPeriodo) == true)
-                                                                        {
-                                                                            oDocumentosVigentesPorValidar.Add(documentoProveedor.ObjVer);
-
-                                                                            // Actualizar el estatus "Vigente" al documento
-                                                                            ActualizarEstatusDocumento
-                                                                            (
-                                                                                "Documento",
-                                                                                documentoProveedor.ObjVer,
-                                                                                pd_EstatusDocumento,
-                                                                                1,
-                                                                                grupo.ConfigurationWorkflow.WorkflowDocumentoProveedor.WorkflowValidacionesDocProveedor.ID,
-                                                                                grupo.ConfigurationWorkflow.WorkflowDocumentoProveedor.EstadoDocumentoVigenteProveedor.ID,
-                                                                                0,
-                                                                                documentoProveedor,
-                                                                                grupo.ConfigurationWorkflow.WorkflowChecklist.WorkflowValidacionesChecklist.ID,
-                                                                                grupo.ConfigurationWorkflow.WorkflowChecklist.EstadoDocumentoProcesado.ID
-                                                                            );
-                                                                        }
-                                                                        else
-                                                                        {
-                                                                            oDocumentosVencidos.Add(documentoProveedor.ObjVer);
-
-                                                                            // Agregar el estatus "Vencido" al documento
-                                                                            ActualizarEstatusDocumento
-                                                                            (
-                                                                                "Documento",
-                                                                                documentoProveedor.ObjVer,
-                                                                                pd_EstatusDocumento,
-                                                                                2,
-                                                                                grupo.ConfigurationWorkflow.WorkflowChecklist.WorkflowValidacionesChecklist.ID,
-                                                                                grupo.ConfigurationWorkflow.WorkflowChecklist.EstadoDocumentoVencido.ID,
-                                                                                0,
-                                                                                documentoProveedor,
-                                                                                grupo.ConfigurationWorkflow.WorkflowChecklist.WorkflowValidacionesChecklist.ID,
-                                                                                grupo.ConfigurationWorkflow.WorkflowChecklist.EstadoDocumentoProcesado.ID
-                                                                            );
-                                                                        }
-                                                                    }
-                                                                    else if (claseDocumento.TipoValidacionVigenciaDocumento == "Por fecha de vigencia")
-                                                                    {
-                                                                        // Validar si la fecha del documento esta dentro del periodo obtenido
-                                                                        if (ComparaFechaBaseContraUnaFechaInicioYFechaFin(
-                                                                            sFechaDeDocumento,
-                                                                            dtFechaInicioPeriodo,
-                                                                            dtFechaFinPeriodo) == true)
-                                                                        {
-                                                                            oDocumentosVigentesPorValidar.Add(documentoProveedor.ObjVer);
-                                                                        }
-                                                                        else
-                                                                        {
-                                                                            oDocumentosVencidos.Add(documentoProveedor.ObjVer);
-                                                                        }
-
-                                                                        // Validar vigencia tomando como referencia el ultimo periodo
-                                                                        if (ValidarVigenciaDeDocumentoEnPeriodoActual(
-                                                                            claseDocumento.VigenciaDocumentoProveedor,
-                                                                            dtFechaDeDocumento,
-                                                                            dtFechaFinVigencia) == true)
-                                                                        {
-                                                                            // Actualizar el estatus "Vigente" al documento
-                                                                            ActualizarEstatusDocumento
-                                                                            (
-                                                                                "Documento",
-                                                                                documentoProveedor.ObjVer,
-                                                                                pd_EstatusDocumento,
-                                                                                1,
-                                                                                grupo.ConfigurationWorkflow.WorkflowDocumentoProveedor.WorkflowValidacionesDocProveedor.ID,
-                                                                                grupo.ConfigurationWorkflow.WorkflowDocumentoProveedor.EstadoDocumentoVigenteProveedor.ID,
-                                                                                0,
-                                                                                documentoProveedor,
-                                                                                grupo.ConfigurationWorkflow.WorkflowChecklist.WorkflowValidacionesChecklist.ID,
-                                                                                grupo.ConfigurationWorkflow.WorkflowChecklist.EstadoDocumentoProcesado.ID
-                                                                            );
-                                                                        }
-                                                                        else
-                                                                        {
-                                                                            // Agregar el estatus "Vencido" al documento
-                                                                            ActualizarEstatusDocumento
-                                                                            (
-                                                                                "Documento",
-                                                                                documentoProveedor.ObjVer,
-                                                                                pd_EstatusDocumento,
-                                                                                2,
-                                                                                grupo.ConfigurationWorkflow.WorkflowChecklist.WorkflowValidacionesChecklist.ID,
-                                                                                grupo.ConfigurationWorkflow.WorkflowChecklist.EstadoDocumentoVencido.ID,
-                                                                                0,
-                                                                                documentoProveedor,
-                                                                                grupo.ConfigurationWorkflow.WorkflowChecklist.WorkflowValidacionesChecklist.ID,
-                                                                                grupo.ConfigurationWorkflow.WorkflowChecklist.EstadoDocumentoProcesado.ID
-                                                                            );
-                                                                        }
-                                                                    }
+                                                                        SysUtils.ReportInfoToEventLog("No hay fecha de documento en: ", documentoProveedor.Title);
+                                                                    }                                                                    
                                                                 }
                                                                 else // Validacion manual es true
                                                                 {
@@ -1777,122 +1784,129 @@ namespace Arkiva.MonitorFiscal.Checklist
                                                                                     .TypedValue
                                                                                     .Value;
 
-                                                                                DateTime dtFechaDeDocumento = Convert.ToDateTime(oFechaDeDocumento);
-
-                                                                                string sFechaDeDocumento = dtFechaDeDocumento.ToString("yyyy-MM-dd");
-
-                                                                                DateTime? dtFechaFinVigencia = null;
-
-                                                                                // Si existe la propiedad en la metadata del documento
-                                                                                if (oPropertyValues.IndexOf(grupo.FechaFinVigencia) != -1)
+                                                                                if (oFechaDeDocumento != null)
                                                                                 {
-                                                                                    if (!oPropertyValues.SearchForPropertyEx(grupo.FechaFinVigencia, true).TypedValue.IsNULL())
+                                                                                    DateTime dtFechaDeDocumento = Convert.ToDateTime(oFechaDeDocumento);
+
+                                                                                    string sFechaDeDocumento = dtFechaDeDocumento.ToString("yyyy-MM-dd");
+
+                                                                                    DateTime? dtFechaFinVigencia = null;
+
+                                                                                    // Si existe la propiedad en la metadata del documento
+                                                                                    if (oPropertyValues.IndexOf(grupo.FechaFinVigencia) != -1)
                                                                                     {
-                                                                                        // Obtener fecha fin de vigencia
-                                                                                        var oFechaFinVigencia = oPropertyValues.SearchForPropertyEx(grupo.FechaFinVigencia, true).TypedValue.Value;
-                                                                                        dtFechaFinVigencia = Convert.ToDateTime(oFechaFinVigencia);
+                                                                                        if (!oPropertyValues.SearchForPropertyEx(grupo.FechaFinVigencia, true).TypedValue.IsNULL())
+                                                                                        {
+                                                                                            // Obtener fecha fin de vigencia
+                                                                                            var oFechaFinVigencia = oPropertyValues.SearchForPropertyEx(grupo.FechaFinVigencia, true).TypedValue.Value;
+                                                                                            dtFechaFinVigencia = Convert.ToDateTime(oFechaFinVigencia);
+                                                                                        }
+                                                                                    }
+
+                                                                                    if (claseEmpleadoLO.TipoValidacionVigenciaDocumento == "Por periodo")
+                                                                                    {
+                                                                                        // Validar si la fecha del documento esta dentro del periodo obtenido
+                                                                                        if (ComparaFechaBaseContraUnaFechaInicioYFechaFin(
+                                                                                        sFechaDeDocumento,
+                                                                                        dtFechaInicioPeriodo,
+                                                                                        dtFechaFinPeriodo) == true)
+                                                                                        {
+                                                                                            oDocumentosVigentesPorValidar.Add(documentoEmpleado.ObjVer);
+
+                                                                                            // Actualizar el estatus "Vigente" al documento
+                                                                                            ActualizarEstatusDocumento
+                                                                                            (
+                                                                                                "Documento",
+                                                                                                documentoEmpleado.ObjVer,
+                                                                                                pd_EstatusDocumento,
+                                                                                                1,
+                                                                                                grupo.ConfigurationWorkflow.WorkflowDocumentoEmpleado.WorkflowValidacionesDocEmpleado.ID,
+                                                                                                grupo.ConfigurationWorkflow.WorkflowDocumentoEmpleado.EstadoDocumentoVigenteEmpleado.ID,
+                                                                                                0,
+                                                                                                documentoEmpleado,
+                                                                                                grupo.ConfigurationWorkflow.WorkflowChecklist.WorkflowValidacionesChecklist.ID,
+                                                                                                grupo.ConfigurationWorkflow.WorkflowChecklist.EstadoDocumentoProcesado.ID
+                                                                                            );
+                                                                                        }
+                                                                                        else
+                                                                                        {
+                                                                                            oDocumentosVencidos.Add(documentoEmpleado.ObjVer);
+
+                                                                                            // Agregar el estatus "Vencido" al documento
+                                                                                            ActualizarEstatusDocumento
+                                                                                            (
+                                                                                                "Documento",
+                                                                                                documentoEmpleado.ObjVer,
+                                                                                                pd_EstatusDocumento,
+                                                                                                2,
+                                                                                                grupo.ConfigurationWorkflow.WorkflowChecklist.WorkflowValidacionesChecklist.ID,
+                                                                                                grupo.ConfigurationWorkflow.WorkflowChecklist.EstadoDocumentoVencido.ID,
+                                                                                                0,
+                                                                                                documentoEmpleado,
+                                                                                                grupo.ConfigurationWorkflow.WorkflowChecklist.WorkflowValidacionesChecklist.ID,
+                                                                                                grupo.ConfigurationWorkflow.WorkflowChecklist.EstadoDocumentoProcesado.ID
+                                                                                            );
+                                                                                        }
+                                                                                    }
+                                                                                    else // Es Por fecha de vigencia
+                                                                                    {
+                                                                                        // Validar si la fecha del documento esta dentro del periodo obtenido
+                                                                                        if (ComparaFechaBaseContraUnaFechaInicioYFechaFin(
+                                                                                        sFechaDeDocumento,
+                                                                                        dtFechaInicioPeriodo,
+                                                                                        dtFechaFinPeriodo) == true)
+                                                                                        {
+                                                                                            oDocumentosVigentesPorValidar.Add(documentoEmpleado.ObjVer);
+                                                                                        }
+                                                                                        else
+                                                                                        {
+                                                                                            oDocumentosVencidos.Add(documentoEmpleado.ObjVer);
+                                                                                        }
+
+                                                                                        // Validar vigencia tomando como referencia el ultimo periodo
+                                                                                        if (ValidarVigenciaDeDocumentoEnPeriodoActual(
+                                                                                            frecuenciaPagoNomina,
+                                                                                            dtFechaDeDocumento,
+                                                                                            dtFechaFinVigencia) == true)
+                                                                                        {
+                                                                                            // Actualizar el estatus "Vigente" al documento
+                                                                                            ActualizarEstatusDocumento
+                                                                                            (
+                                                                                                "Documento",
+                                                                                                documentoEmpleado.ObjVer,
+                                                                                                pd_EstatusDocumento,
+                                                                                                1,
+                                                                                                grupo.ConfigurationWorkflow.WorkflowDocumentoEmpleado.WorkflowValidacionesDocEmpleado.ID,
+                                                                                                grupo.ConfigurationWorkflow.WorkflowDocumentoEmpleado.EstadoDocumentoVigenteEmpleado.ID,
+                                                                                                0,
+                                                                                                documentoEmpleado,
+                                                                                                grupo.ConfigurationWorkflow.WorkflowChecklist.WorkflowValidacionesChecklist.ID,
+                                                                                                grupo.ConfigurationWorkflow.WorkflowChecklist.EstadoDocumentoProcesado.ID
+                                                                                            );
+                                                                                        }
+                                                                                        else
+                                                                                        {
+                                                                                            // Agregar el estatus "Vencido" al documento
+                                                                                            ActualizarEstatusDocumento
+                                                                                            (
+                                                                                                "Documento",
+                                                                                                documentoEmpleado.ObjVer,
+                                                                                                pd_EstatusDocumento,
+                                                                                                2,
+                                                                                                grupo.ConfigurationWorkflow.WorkflowChecklist.WorkflowValidacionesChecklist.ID,
+                                                                                                grupo.ConfigurationWorkflow.WorkflowChecklist.EstadoDocumentoVencido.ID,
+                                                                                                0,
+                                                                                                documentoEmpleado,
+                                                                                                grupo.ConfigurationWorkflow.WorkflowChecklist.WorkflowValidacionesChecklist.ID,
+                                                                                                grupo.ConfigurationWorkflow.WorkflowChecklist.EstadoDocumentoProcesado.ID
+                                                                                            );
+                                                                                        }
                                                                                     }
                                                                                 }
-
-                                                                                if (claseEmpleadoLO.TipoValidacionVigenciaDocumento == "Por periodo")
+                                                                                else
                                                                                 {
-                                                                                    // Validar si la fecha del documento esta dentro del periodo obtenido
-                                                                                    if (ComparaFechaBaseContraUnaFechaInicioYFechaFin(
-                                                                                    sFechaDeDocumento,
-                                                                                    dtFechaInicioPeriodo,
-                                                                                    dtFechaFinPeriodo) == true)
-                                                                                    {
-                                                                                        oDocumentosVigentesPorValidar.Add(documentoEmpleado.ObjVer);
-
-                                                                                        // Actualizar el estatus "Vigente" al documento
-                                                                                        ActualizarEstatusDocumento
-                                                                                        (
-                                                                                            "Documento",
-                                                                                            documentoEmpleado.ObjVer,
-                                                                                            pd_EstatusDocumento,
-                                                                                            1,
-                                                                                            grupo.ConfigurationWorkflow.WorkflowDocumentoEmpleado.WorkflowValidacionesDocEmpleado.ID,
-                                                                                            grupo.ConfigurationWorkflow.WorkflowDocumentoEmpleado.EstadoDocumentoVigenteEmpleado.ID,
-                                                                                            0,
-                                                                                            documentoEmpleado,
-                                                                                            grupo.ConfigurationWorkflow.WorkflowChecklist.WorkflowValidacionesChecklist.ID,
-                                                                                            grupo.ConfigurationWorkflow.WorkflowChecklist.EstadoDocumentoProcesado.ID
-                                                                                        );
-                                                                                    }
-                                                                                    else
-                                                                                    {
-                                                                                        oDocumentosVencidos.Add(documentoEmpleado.ObjVer);
-
-                                                                                        // Agregar el estatus "Vencido" al documento
-                                                                                        ActualizarEstatusDocumento
-                                                                                        (
-                                                                                            "Documento",
-                                                                                            documentoEmpleado.ObjVer,
-                                                                                            pd_EstatusDocumento,
-                                                                                            2,
-                                                                                            grupo.ConfigurationWorkflow.WorkflowChecklist.WorkflowValidacionesChecklist.ID,
-                                                                                            grupo.ConfigurationWorkflow.WorkflowChecklist.EstadoDocumentoVencido.ID,
-                                                                                            0,
-                                                                                            documentoEmpleado,
-                                                                                            grupo.ConfigurationWorkflow.WorkflowChecklist.WorkflowValidacionesChecklist.ID,
-                                                                                            grupo.ConfigurationWorkflow.WorkflowChecklist.EstadoDocumentoProcesado.ID
-                                                                                        );
-                                                                                    }
-                                                                                }
-                                                                                else // Es Por fecha de vigencia
-                                                                                {
-                                                                                    // Validar si la fecha del documento esta dentro del periodo obtenido
-                                                                                    if (ComparaFechaBaseContraUnaFechaInicioYFechaFin(
-                                                                                    sFechaDeDocumento,
-                                                                                    dtFechaInicioPeriodo,
-                                                                                    dtFechaFinPeriodo) == true)
-                                                                                    {
-                                                                                        oDocumentosVigentesPorValidar.Add(documentoEmpleado.ObjVer);
-                                                                                    }
-                                                                                    else
-                                                                                    {
-                                                                                        oDocumentosVencidos.Add(documentoEmpleado.ObjVer);
-                                                                                    }
-
-                                                                                    // Validar vigencia tomando como referencia el ultimo periodo
-                                                                                    if (ValidarVigenciaDeDocumentoEnPeriodoActual(
-                                                                                        frecuenciaPagoNomina,
-                                                                                        dtFechaDeDocumento,
-                                                                                        dtFechaFinVigencia) == true)
-                                                                                    {
-                                                                                        // Actualizar el estatus "Vigente" al documento
-                                                                                        ActualizarEstatusDocumento
-                                                                                        (
-                                                                                            "Documento",
-                                                                                            documentoEmpleado.ObjVer,
-                                                                                            pd_EstatusDocumento,
-                                                                                            1,
-                                                                                            grupo.ConfigurationWorkflow.WorkflowDocumentoEmpleado.WorkflowValidacionesDocEmpleado.ID,
-                                                                                            grupo.ConfigurationWorkflow.WorkflowDocumentoEmpleado.EstadoDocumentoVigenteEmpleado.ID,
-                                                                                            0,
-                                                                                            documentoEmpleado,
-                                                                                            grupo.ConfigurationWorkflow.WorkflowChecklist.WorkflowValidacionesChecklist.ID,
-                                                                                            grupo.ConfigurationWorkflow.WorkflowChecklist.EstadoDocumentoProcesado.ID
-                                                                                        );
-                                                                                    }
-                                                                                    else
-                                                                                    {
-                                                                                        // Agregar el estatus "Vencido" al documento
-                                                                                        ActualizarEstatusDocumento
-                                                                                        (
-                                                                                            "Documento",
-                                                                                            documentoEmpleado.ObjVer,
-                                                                                            pd_EstatusDocumento,
-                                                                                            2,
-                                                                                            grupo.ConfigurationWorkflow.WorkflowChecklist.WorkflowValidacionesChecklist.ID,
-                                                                                            grupo.ConfigurationWorkflow.WorkflowChecklist.EstadoDocumentoVencido.ID,
-                                                                                            0,
-                                                                                            documentoEmpleado,
-                                                                                            grupo.ConfigurationWorkflow.WorkflowChecklist.WorkflowValidacionesChecklist.ID,
-                                                                                            grupo.ConfigurationWorkflow.WorkflowChecklist.EstadoDocumentoProcesado.ID
-                                                                                        );
-                                                                                    }
-                                                                                }
+                                                                                    SysUtils.ReportInfoToEventLog("No hay fecha de documento en: ", documentoEmpleado.Title);
+                                                                                }                                                                                
                                                                             }                                                                                                                                                        
                                                                         }
 
