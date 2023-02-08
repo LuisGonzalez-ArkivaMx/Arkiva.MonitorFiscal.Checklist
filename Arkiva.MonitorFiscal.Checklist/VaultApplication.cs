@@ -482,8 +482,7 @@ namespace Arkiva.MonitorFiscal.Checklist
                                                                                     grupo.ConfigurationWorkflow.WorkflowDocumentoProveedor.EstadoDocumentoVigenteProveedor.ID,
                                                                                     0,
                                                                                     documentoProveedor,
-                                                                                    grupo.ConfigurationWorkflow.WorkflowChecklist.WorkflowValidacionesChecklist.ID,
-                                                                                    grupo.ConfigurationWorkflow.WorkflowChecklist.EstadoDocumentoProcesado.ID
+                                                                                    grupo.ConfigurationWorkflow.WorkflowDocumentoProveedor.WorkflowValidacionesDocProveedor.ID
                                                                                 );
                                                                             }
                                                                             else
@@ -501,8 +500,7 @@ namespace Arkiva.MonitorFiscal.Checklist
                                                                                     grupo.ConfigurationWorkflow.WorkflowChecklist.EstadoDocumentoVencido.ID,
                                                                                     0,
                                                                                     documentoProveedor,
-                                                                                    grupo.ConfigurationWorkflow.WorkflowChecklist.WorkflowValidacionesChecklist.ID,
-                                                                                    grupo.ConfigurationWorkflow.WorkflowChecklist.EstadoDocumentoProcesado.ID
+                                                                                    grupo.ConfigurationWorkflow.WorkflowDocumentoProveedor.WorkflowValidacionesDocProveedor.ID
                                                                                 );
                                                                             }
                                                                         }
@@ -538,8 +536,7 @@ namespace Arkiva.MonitorFiscal.Checklist
                                                                                     grupo.ConfigurationWorkflow.WorkflowDocumentoProveedor.EstadoDocumentoVigenteProveedor.ID,
                                                                                     0,
                                                                                     documentoProveedor,
-                                                                                    grupo.ConfigurationWorkflow.WorkflowChecklist.WorkflowValidacionesChecklist.ID,
-                                                                                    grupo.ConfigurationWorkflow.WorkflowChecklist.EstadoDocumentoProcesado.ID
+                                                                                    grupo.ConfigurationWorkflow.WorkflowDocumentoProveedor.WorkflowValidacionesDocProveedor.ID
                                                                                 );
                                                                             }
                                                                             else
@@ -555,8 +552,7 @@ namespace Arkiva.MonitorFiscal.Checklist
                                                                                     grupo.ConfigurationWorkflow.WorkflowChecklist.EstadoDocumentoVencido.ID,
                                                                                     0,
                                                                                     documentoProveedor,
-                                                                                    grupo.ConfigurationWorkflow.WorkflowChecklist.WorkflowValidacionesChecklist.ID,
-                                                                                    grupo.ConfigurationWorkflow.WorkflowChecklist.EstadoDocumentoProcesado.ID
+                                                                                    grupo.ConfigurationWorkflow.WorkflowDocumentoProveedor.WorkflowValidacionesDocProveedor.ID
                                                                                 );
                                                                             }
                                                                         }
@@ -591,8 +587,7 @@ namespace Arkiva.MonitorFiscal.Checklist
                                                                             grupo.ConfigurationWorkflow.WorkflowChecklist.EstadoDocumentoVencido.ID,
                                                                             0,
                                                                             documentoProveedor,
-                                                                            grupo.ConfigurationWorkflow.WorkflowChecklist.WorkflowValidacionesChecklist.ID,
-                                                                            grupo.ConfigurationWorkflow.WorkflowChecklist.EstadoDocumentoProcesado.ID
+                                                                            grupo.ConfigurationWorkflow.WorkflowDocumentoProveedor.WorkflowValidacionesDocProveedor.ID
                                                                         );
                                                                     }
 
@@ -611,8 +606,7 @@ namespace Arkiva.MonitorFiscal.Checklist
                                                                             grupo.ConfigurationWorkflow.WorkflowDocumentoProveedor.EstadoDocumentoVigenteProveedor.ID,
                                                                             0,
                                                                             documentoProveedor,
-                                                                            grupo.ConfigurationWorkflow.WorkflowValidacionManual.WorkflowValidacionManualDocumento.ID,
-                                                                            grupo.ConfigurationWorkflow.WorkflowValidacionManual.EstadoDocumentoValido.ID
+                                                                            grupo.ConfigurationWorkflow.WorkflowDocumentoProveedor.WorkflowValidacionesDocProveedor.ID
                                                                         );
                                                                     }
 
@@ -993,8 +987,7 @@ namespace Arkiva.MonitorFiscal.Checklist
                                                                     grupo.ConfigurationWorkflow.WorkflowDocumentoProveedor.EstadoDocumentoVigenteProveedor.ID,
                                                                     0,
                                                                     documentoProveedor,
-                                                                    grupo.ConfigurationWorkflow.WorkflowChecklist.WorkflowValidacionesChecklist.ID,
-                                                                    grupo.ConfigurationWorkflow.WorkflowChecklist.EstadoDocumentoProcesado.ID
+                                                                    grupo.ConfigurationWorkflow.WorkflowDocumentoProveedor.WorkflowValidacionesDocProveedor.ID
                                                                 );
                                                             }
                                                             else // Validacion manual es true
@@ -1022,8 +1015,7 @@ namespace Arkiva.MonitorFiscal.Checklist
                                                                         grupo.ConfigurationWorkflow.WorkflowChecklist.EstadoDocumentoVencido.ID,
                                                                         0,
                                                                         documentoProveedor,
-                                                                        grupo.ConfigurationWorkflow.WorkflowChecklist.WorkflowValidacionesChecklist.ID,
-                                                                        grupo.ConfigurationWorkflow.WorkflowChecklist.EstadoDocumentoProcesado.ID
+                                                                        grupo.ConfigurationWorkflow.WorkflowDocumentoProveedor.WorkflowValidacionesDocProveedor.ID
                                                                     );
                                                                 }
 
@@ -1042,8 +1034,7 @@ namespace Arkiva.MonitorFiscal.Checklist
                                                                         grupo.ConfigurationWorkflow.WorkflowDocumentoProveedor.EstadoDocumentoVigenteProveedor.ID,
                                                                         0,
                                                                         documentoProveedor,
-                                                                        grupo.ConfigurationWorkflow.WorkflowValidacionManual.WorkflowValidacionManualDocumento.ID,
-                                                                        grupo.ConfigurationWorkflow.WorkflowValidacionManual.EstadoDocumentoValido.ID
+                                                                        grupo.ConfigurationWorkflow.WorkflowDocumentoProveedor.WorkflowValidacionesDocProveedor.ID
                                                                     );
                                                                 }
                                                             }
@@ -1879,8 +1870,7 @@ namespace Arkiva.MonitorFiscal.Checklist
                                                                                                 grupo.ConfigurationWorkflow.WorkflowDocumentoEmpleado.EstadoDocumentoVigenteEmpleado.ID,
                                                                                                 0,
                                                                                                 documentoEmpleado,
-                                                                                                grupo.ConfigurationWorkflow.WorkflowChecklist.WorkflowValidacionesChecklist.ID,
-                                                                                                grupo.ConfigurationWorkflow.WorkflowChecklist.EstadoDocumentoProcesado.ID
+                                                                                                grupo.ConfigurationWorkflow.WorkflowDocumentoEmpleado.WorkflowValidacionesDocEmpleado.ID
                                                                                             );
                                                                                         }
                                                                                         else
@@ -1898,8 +1888,7 @@ namespace Arkiva.MonitorFiscal.Checklist
                                                                                                 grupo.ConfigurationWorkflow.WorkflowChecklist.EstadoDocumentoVencido.ID,
                                                                                                 0,
                                                                                                 documentoEmpleado,
-                                                                                                grupo.ConfigurationWorkflow.WorkflowChecklist.WorkflowValidacionesChecklist.ID,
-                                                                                                grupo.ConfigurationWorkflow.WorkflowChecklist.EstadoDocumentoProcesado.ID
+                                                                                                grupo.ConfigurationWorkflow.WorkflowDocumentoEmpleado.WorkflowValidacionesDocEmpleado.ID
                                                                                             );
                                                                                         }
                                                                                     }
@@ -1935,8 +1924,7 @@ namespace Arkiva.MonitorFiscal.Checklist
                                                                                                 grupo.ConfigurationWorkflow.WorkflowDocumentoEmpleado.EstadoDocumentoVigenteEmpleado.ID,
                                                                                                 0,
                                                                                                 documentoEmpleado,
-                                                                                                grupo.ConfigurationWorkflow.WorkflowChecklist.WorkflowValidacionesChecklist.ID,
-                                                                                                grupo.ConfigurationWorkflow.WorkflowChecklist.EstadoDocumentoProcesado.ID
+                                                                                                grupo.ConfigurationWorkflow.WorkflowDocumentoEmpleado.WorkflowValidacionesDocEmpleado.ID
                                                                                             );
                                                                                         }
                                                                                         else
@@ -1952,8 +1940,7 @@ namespace Arkiva.MonitorFiscal.Checklist
                                                                                                 grupo.ConfigurationWorkflow.WorkflowChecklist.EstadoDocumentoVencido.ID,
                                                                                                 0,
                                                                                                 documentoEmpleado,
-                                                                                                grupo.ConfigurationWorkflow.WorkflowChecklist.WorkflowValidacionesChecklist.ID,
-                                                                                                grupo.ConfigurationWorkflow.WorkflowChecklist.EstadoDocumentoProcesado.ID
+                                                                                                grupo.ConfigurationWorkflow.WorkflowDocumentoEmpleado.WorkflowValidacionesDocEmpleado.ID
                                                                                             );
                                                                                         }
                                                                                     }
@@ -1988,8 +1975,7 @@ namespace Arkiva.MonitorFiscal.Checklist
                                                                                         grupo.ConfigurationWorkflow.WorkflowChecklist.EstadoDocumentoVencido.ID,
                                                                                         0,
                                                                                         documentoEmpleado,
-                                                                                        grupo.ConfigurationWorkflow.WorkflowChecklist.WorkflowValidacionesChecklist.ID,
-                                                                                        grupo.ConfigurationWorkflow.WorkflowChecklist.EstadoDocumentoProcesado.ID
+                                                                                        grupo.ConfigurationWorkflow.WorkflowDocumentoEmpleado.WorkflowValidacionesDocEmpleado.ID
                                                                                     );
                                                                                 }
 
@@ -2008,8 +1994,7 @@ namespace Arkiva.MonitorFiscal.Checklist
                                                                                         grupo.ConfigurationWorkflow.WorkflowDocumentoEmpleado.EstadoDocumentoVigenteEmpleado.ID,
                                                                                         0,
                                                                                         documentoEmpleado,
-                                                                                        grupo.ConfigurationWorkflow.WorkflowChecklist.WorkflowValidacionesChecklist.ID,
-                                                                                        grupo.ConfigurationWorkflow.WorkflowChecklist.EstadoDocumentoProcesado.ID
+                                                                                        grupo.ConfigurationWorkflow.WorkflowDocumentoEmpleado.WorkflowValidacionesDocEmpleado.ID
                                                                                     );
                                                                                 }
 
@@ -2818,7 +2803,7 @@ namespace Arkiva.MonitorFiscal.Checklist
             oObjVerEx.Vault.ObjectOperations.CheckIn(checkedOutObjectVersion);
         }
 
-        private void ActualizarEstatusDocumento(string sTipoObjeto, ObjVer oObjVer, int iPropertyDefEstatus, int iEstatusIdValue, int iWorkflow, int iState, int iObjectTypeNoDocumento = 0, ObjVerEx oObjVerEx = null, int iWorkflowValidacionesChecklist = 0, int iStateDocumentoProcesado = 0)
+        private void ActualizarEstatusDocumento(string sTipoObjeto, ObjVer oObjVer, int iPropertyDefEstatus, int iEstatusIdValue, int iWorkflow, int iState, int iObjectTypeNoDocumento = 0, ObjVerEx oObjVerEx = null, int iWorkflowRESTAPIClient = 0)
         {
             var oWorkflowstate = new ObjectVersionWorkflowState();
             var oLookup = new Lookup();
@@ -2861,29 +2846,31 @@ namespace Arkiva.MonitorFiscal.Checklist
 
             if (sTipoObjeto == "Documento")
             {
-                if (iEstatusIdValue == 1) // Si el documento esta vigente, validar el estado de workflow para moverlo
-                {
-                    var documentoProperties = oObjVerEx.Properties;
-                    var pdWorkflow = oObjVerEx.Vault.PropertyDefOperations.GetBuiltInPropertyDef(MFBuiltInPropertyDef.MFBuiltInPropertyDefWorkflow);
-                    var pdState = oObjVerEx.Vault.PropertyDefOperations.GetBuiltInPropertyDef(MFBuiltInPropertyDef.MFBuiltInPropertyDefState);
-                    var iWorkflowDocumento = documentoProperties.SearchForPropertyEx(pdWorkflow.ID, true).TypedValue.GetLookupID();
-                    var iStateDocumento = documentoProperties.SearchForPropertyEx(pdState.ID, true).TypedValue.GetLookupID();
+                var documentoProperties = oObjVerEx.Properties;
+                var pdWorkflow = oObjVerEx.Vault.PropertyDefOperations.GetBuiltInPropertyDef(MFBuiltInPropertyDef.MFBuiltInPropertyDefWorkflow);
+                //var pdState = oObjVerEx.Vault.PropertyDefOperations.GetBuiltInPropertyDef(MFBuiltInPropertyDef.MFBuiltInPropertyDefState);
+                var iWorkflowDocumento = documentoProperties.SearchForPropertyEx(pdWorkflow.ID, true).TypedValue.GetLookupID();
+                //var iStateDocumento = documentoProperties.SearchForPropertyEx(pdState.ID, true).TypedValue.GetLookupID();
 
-                    if (iWorkflowDocumento == iWorkflowValidacionesChecklist && iStateDocumento == iStateDocumentoProcesado)
-                    {
-                        // Actualizar el estado del workflow "Validaciones REPSE" dentro del documento
-                        oWorkflowstate.Workflow.TypedValue.SetValue(MFDataType.MFDatatypeLookup, iWorkflow);
-                        oWorkflowstate.State.TypedValue.SetValue(MFDataType.MFDatatypeLookup, iState);
-                        PermanentVault.ObjectPropertyOperations.SetWorkflowStateEx(checkedOutObjectVersion, oWorkflowstate);
-                    }
-                }
-                else // Si el documento esta Vencido, siempre moverlo al estado Documento Vencido del Workflow Validaciones Checklist
+                if (iWorkflowDocumento != iWorkflowRESTAPIClient)
                 {
                     // Actualizar el estado del workflow "Validaciones REPSE" dentro del documento
                     oWorkflowstate.Workflow.TypedValue.SetValue(MFDataType.MFDatatypeLookup, iWorkflow);
                     oWorkflowstate.State.TypedValue.SetValue(MFDataType.MFDatatypeLookup, iState);
                     PermanentVault.ObjectPropertyOperations.SetWorkflowStateEx(checkedOutObjectVersion, oWorkflowstate);
-                }                                
+                }
+
+                //if (iEstatusIdValue == 1) // Si el documento esta vigente, validar el estado de workflow para moverlo
+                //{
+                    
+                //}
+                //else // Si el documento esta Vencido, siempre moverlo al estado Documento Vencido del Workflow Validaciones Checklist
+                //{
+                //    // Actualizar el estado del workflow "Validaciones REPSE" dentro del documento
+                //    oWorkflowstate.Workflow.TypedValue.SetValue(MFDataType.MFDatatypeLookup, iWorkflow);
+                //    oWorkflowstate.State.TypedValue.SetValue(MFDataType.MFDatatypeLookup, iState);
+                //    PermanentVault.ObjectPropertyOperations.SetWorkflowStateEx(checkedOutObjectVersion, oWorkflowstate);
+                //}                                
             }            
 
             PermanentVault.ObjectOperations.CheckIn(checkedOutObjectVersion);
