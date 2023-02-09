@@ -74,7 +74,7 @@ namespace Arkiva.MonitorFiscal.Checklist
                         {
                             string sFechaActual = DateTime.Now.ToString("yyyy-MM-dd");
 
-                            if (grupo.GroupEnabled.Equals("Yes") && ComparaFechaBaseContraUnaFechaInicioYFechaFin(sFechaActual, grupo.FechaInicio, grupo.FechaFin) == true)
+                            if (grupo.GroupEnabled.Equals("Yes") && ValidaDocumentoDentroDeUnPeriodoDeFechas(sFechaActual, grupo.FechaInicio, grupo.FechaFin) == true)
                             {
                                 // Inicializar objetos, clases y propiedades
                                 var ot_ContactoExternoSE = PermanentVault
@@ -371,227 +371,145 @@ namespace Arkiva.MonitorFiscal.Checklist
                                                             Convert.ToDateTime(sFechaFin)     // t2
                                                         );
 
-                                                        while (iDateCompare >= 0)
+                                                        foreach (var documentoProveedor in searchBuilderDocumentosProveedor.FindEx())
                                                         {
-                                                            foreach (var documentoProveedor in searchBuilderDocumentosProveedor.FindEx())
+                                                            bool bDocumentoEncontradoEnPeriodo = false;
+                                                            bool bDocumentoVigenteContraFechaActualOFechaFinDeVigencia = false;
+
+                                                            SysUtils.ReportInfoToEventLog("Documento: " + documentoProveedor.Title + ", ID: " + documentoProveedor.ObjVer.ID);
+
+                                                            bool bDocumentoValidacionManual = false;
+                                                            int classWorkflow = 0;
+
+                                                            oPropertyValues = PermanentVault
+                                                                .ObjectPropertyOperations
+                                                                .GetProperties(documentoProveedor.ObjVer);
+
+                                                            // Validar checkbox de validacion manual
+                                                            if (oPropertyValues.IndexOf(pd_ValidacionManual) != -1)
                                                             {
-                                                                SysUtils.ReportInfoToEventLog("Documento: " + documentoProveedor.Title + ", ID: " + documentoProveedor.ObjVer.ID);
+                                                                var validacionManual = oPropertyValues.SearchForPropertyEx(pd_ValidacionManual, true).TypedValue.Value;
 
-                                                                bool bDocumentoValidacionManual = false;
-                                                                int classWorkflow = 0;
-
-                                                                oPropertyValues = PermanentVault
-                                                                    .ObjectPropertyOperations
-                                                                    .GetProperties(documentoProveedor.ObjVer);
-
-                                                                // Validar checkbox de validacion manual
-                                                                if (oPropertyValues.IndexOf(pd_ValidacionManual) != -1)
+                                                                if (validacionManual != null)
                                                                 {
-                                                                    var validacionManual = oPropertyValues.SearchForPropertyEx(pd_ValidacionManual, true).TypedValue.Value;
+                                                                    bool bValidacionManualValue = Convert.ToBoolean(validacionManual);
 
-                                                                    if (validacionManual != null)
+                                                                    if (bValidacionManualValue == true)
                                                                     {
-                                                                        bool bValidacionManualValue = Convert.ToBoolean(validacionManual);
+                                                                        var estadoValidacionManual = oPropertyValues.SearchForPropertyEx(pd_EstadoValidacionManual, true).TypedValue.GetLookupID();
 
-                                                                        if (bValidacionManualValue == true)
+                                                                        if (estadoValidacionManual == 3) // Documento Validado
                                                                         {
-                                                                            var estadoValidacionManual = oPropertyValues.SearchForPropertyEx(pd_EstadoValidacionManual, true).TypedValue.GetLookupID();
-
-                                                                            if (estadoValidacionManual == 3) // Documento Validado
-                                                                            {
-                                                                                ActualizarWorkflowValidacionManual
-                                                                                (
-                                                                                    documentoProveedor,
-                                                                                    grupo.ConfigurationWorkflow.WorkflowValidacionManual.WorkflowValidacionManualDocumento.ID,
-                                                                                    grupo.ConfigurationWorkflow.WorkflowValidacionManual.EstadoDocumentoValido.ID
-                                                                                );
-                                                                            }
-
-                                                                            if (estadoValidacionManual == 4) // Documento No Validado
-                                                                            {
-                                                                                ActualizarWorkflowValidacionManual
-                                                                                (
-                                                                                    documentoProveedor,
-                                                                                    grupo.ConfigurationWorkflow.WorkflowValidacionManual.WorkflowValidacionManualDocumento.ID,
-                                                                                    grupo.ConfigurationWorkflow.WorkflowValidacionManual.EstadoDocumentoNoValido.ID
-                                                                                );
-                                                                            }
-                                                                        }
-                                                                    }                                                                    
-                                                                }
-
-                                                                // Validar si el documento es para validacion manual
-                                                                var iWorkflow = documentoProveedor
-                                                                    .Vault
-                                                                    .PropertyDefOperations
-                                                                    .GetBuiltInPropertyDef(MFBuiltInPropertyDef.MFBuiltInPropertyDefWorkflow)
-                                                                    .ID;
-
-                                                                classWorkflow = oPropertyValues.SearchForPropertyEx(iWorkflow, true).TypedValue.GetLookupID();
-
-                                                                if (classWorkflow == grupo.ConfigurationWorkflow.WorkflowValidacionManual.WorkflowValidacionManualDocumento.ID)
-                                                                {
-                                                                    bDocumentoValidacionManual = true;
-                                                                }                                                                     
-                                                                
-                                                                if (bDocumentoValidacionManual == false)
-                                                                {
-                                                                    // Obtener fecha del documento
-                                                                    var oFechaDeDocumento = oPropertyValues
-                                                                        .SearchForPropertyEx(grupo.FechaDeDocumento, true)
-                                                                        .TypedValue
-                                                                        .Value;
-
-                                                                    if (oFechaDeDocumento != null)
-                                                                    {
-                                                                        DateTime dtFechaDeDocumento = Convert.ToDateTime(oFechaDeDocumento);
-
-                                                                        string sFechaDeDocumento = dtFechaDeDocumento.ToString("yyyy-MM-dd");
-
-                                                                        DateTime? dtFechaFinVigencia = null;
-
-                                                                        // Si existe la propiedad en la metadata del documento
-                                                                        if (oPropertyValues.IndexOf(grupo.FechaFinVigencia) != -1)
-                                                                        {
-                                                                            if (!oPropertyValues.SearchForPropertyEx(grupo.FechaFinVigencia, true).TypedValue.IsNULL())
-                                                                            {
-                                                                                // Obtener fecha fin de vigencia
-                                                                                var oFechaFinVigencia = oPropertyValues.SearchForPropertyEx(grupo.FechaFinVigencia, true).TypedValue.Value;
-                                                                                dtFechaFinVigencia = Convert.ToDateTime(oFechaFinVigencia);
-                                                                            }
+                                                                            ActualizarWorkflowValidacionManual
+                                                                            (
+                                                                                documentoProveedor,
+                                                                                grupo.ConfigurationWorkflow.WorkflowValidacionManual.WorkflowValidacionManualDocumento.ID,
+                                                                                grupo.ConfigurationWorkflow.WorkflowValidacionManual.EstadoDocumentoValido.ID
+                                                                            );
                                                                         }
 
-                                                                        if (claseDocumento.TipoValidacionVigenciaDocumento == "Por periodo")
+                                                                        if (estadoValidacionManual == 4) // Documento No Validado
                                                                         {
-                                                                            // Validar si la fecha del documento esta dentro del periodo obtenido
-                                                                            if (ComparaFechaBaseContraUnaFechaInicioYFechaFin(
-                                                                                sFechaDeDocumento,
-                                                                                dtFechaInicioPeriodo,
-                                                                                dtFechaFinPeriodo) == true)
-                                                                            {
-                                                                                oDocumentosVigentesPorValidar.Add(documentoProveedor.ObjVer);
-
-                                                                                // Actualizar el estatus "Vigente" al documento
-                                                                                ActualizarEstatusDocumento
-                                                                                (
-                                                                                    "Documento",
-                                                                                    documentoProveedor.ObjVer,
-                                                                                    pd_EstatusDocumento,
-                                                                                    1,
-                                                                                    grupo.ConfigurationWorkflow.WorkflowDocumentoProveedor.WorkflowValidacionesDocProveedor.ID,
-                                                                                    grupo.ConfigurationWorkflow.WorkflowDocumentoProveedor.EstadoDocumentoVigenteProveedor.ID,
-                                                                                    0,
-                                                                                    documentoProveedor,
-                                                                                    grupo.ConfigurationWorkflow.WorkflowDocumentoProveedor.WorkflowValidacionesDocProveedor.ID
-                                                                                );
-                                                                            }
-                                                                            else
-                                                                            {
-                                                                                oDocumentosVencidos.Add(documentoProveedor.ObjVer);
-
-                                                                                // Agregar el estatus "Vencido" al documento
-                                                                                ActualizarEstatusDocumento
-                                                                                (
-                                                                                    "Documento",
-                                                                                    documentoProveedor.ObjVer,
-                                                                                    pd_EstatusDocumento,
-                                                                                    2,
-                                                                                    grupo.ConfigurationWorkflow.WorkflowChecklist.WorkflowValidacionesChecklist.ID,
-                                                                                    grupo.ConfigurationWorkflow.WorkflowChecklist.EstadoDocumentoVencido.ID,
-                                                                                    0,
-                                                                                    documentoProveedor,
-                                                                                    grupo.ConfigurationWorkflow.WorkflowDocumentoProveedor.WorkflowValidacionesDocProveedor.ID
-                                                                                );
-                                                                            }
-                                                                        }
-                                                                        else if (claseDocumento.TipoValidacionVigenciaDocumento == "Por fecha de vigencia")
-                                                                        {
-                                                                            // Validar si la fecha del documento esta dentro del periodo obtenido
-                                                                            if (ComparaFechaBaseContraUnaFechaInicioYFechaFin(
-                                                                                sFechaDeDocumento,
-                                                                                dtFechaInicioPeriodo,
-                                                                                dtFechaFinPeriodo) == true)
-                                                                            {
-                                                                                oDocumentosVigentesPorValidar.Add(documentoProveedor.ObjVer);
-                                                                            }
-                                                                            else
-                                                                            {
-                                                                                oDocumentosVencidos.Add(documentoProveedor.ObjVer);
-                                                                            }
-
-                                                                            // Validar vigencia tomando como referencia el ultimo periodo
-                                                                            if (ValidarVigenciaDeDocumentoEnPeriodoActual(
-                                                                                claseDocumento.VigenciaDocumentoProveedor,
-                                                                                dtFechaDeDocumento,
-                                                                                dtFechaFinVigencia) == true)
-                                                                            {
-                                                                                // Actualizar el estatus "Vigente" al documento
-                                                                                ActualizarEstatusDocumento
-                                                                                (
-                                                                                    "Documento",
-                                                                                    documentoProveedor.ObjVer,
-                                                                                    pd_EstatusDocumento,
-                                                                                    1,
-                                                                                    grupo.ConfigurationWorkflow.WorkflowDocumentoProveedor.WorkflowValidacionesDocProveedor.ID,
-                                                                                    grupo.ConfigurationWorkflow.WorkflowDocumentoProveedor.EstadoDocumentoVigenteProveedor.ID,
-                                                                                    0,
-                                                                                    documentoProveedor,
-                                                                                    grupo.ConfigurationWorkflow.WorkflowDocumentoProveedor.WorkflowValidacionesDocProveedor.ID
-                                                                                );
-                                                                            }
-                                                                            else
-                                                                            {
-                                                                                // Agregar el estatus "Vencido" al documento
-                                                                                ActualizarEstatusDocumento
-                                                                                (
-                                                                                    "Documento",
-                                                                                    documentoProveedor.ObjVer,
-                                                                                    pd_EstatusDocumento,
-                                                                                    2,
-                                                                                    grupo.ConfigurationWorkflow.WorkflowChecklist.WorkflowValidacionesChecklist.ID,
-                                                                                    grupo.ConfigurationWorkflow.WorkflowChecklist.EstadoDocumentoVencido.ID,
-                                                                                    0,
-                                                                                    documentoProveedor,
-                                                                                    grupo.ConfigurationWorkflow.WorkflowDocumentoProveedor.WorkflowValidacionesDocProveedor.ID
-                                                                                );
-                                                                            }
+                                                                            ActualizarWorkflowValidacionManual
+                                                                            (
+                                                                                documentoProveedor,
+                                                                                grupo.ConfigurationWorkflow.WorkflowValidacionManual.WorkflowValidacionManualDocumento.ID,
+                                                                                grupo.ConfigurationWorkflow.WorkflowValidacionManual.EstadoDocumentoNoValido.ID
+                                                                            );
                                                                         }
                                                                     }
-                                                                    else
-                                                                    {
-                                                                        SysUtils.ReportInfoToEventLog("No hay fecha de documento en: ", documentoProveedor.Title);
-                                                                    }                                                                    
                                                                 }
-                                                                else // Validacion manual es true
+                                                            }
+
+                                                            // Validar si el documento es para validacion manual
+                                                            var iWorkflow = documentoProveedor
+                                                                .Vault
+                                                                .PropertyDefOperations
+                                                                .GetBuiltInPropertyDef(MFBuiltInPropertyDef.MFBuiltInPropertyDefWorkflow)
+                                                                .ID;
+
+                                                            classWorkflow = oPropertyValues.SearchForPropertyEx(iWorkflow, true).TypedValue.GetLookupID();
+
+                                                            if (classWorkflow == grupo.ConfigurationWorkflow.WorkflowValidacionManual.WorkflowValidacionManualDocumento.ID)
+                                                            {
+                                                                bDocumentoValidacionManual = true;
+                                                            }
+
+                                                            // Obtener fecha del documento
+                                                            var oFechaDeDocumento = oPropertyValues
+                                                                .SearchForPropertyEx(grupo.FechaDeDocumento, true)
+                                                                .TypedValue
+                                                                .Value;
+
+                                                            if (oFechaDeDocumento != null)
+                                                            {
+                                                                DateTime dtFechaDeDocumento = Convert.ToDateTime(oFechaDeDocumento);
+
+                                                                string sFechaDeDocumento = dtFechaDeDocumento.ToString("yyyy-MM-dd");
+
+                                                                DateTime? dtFechaFinVigencia = null;
+
+                                                                // Si existe la propiedad en la metadata del documento
+                                                                if (oPropertyValues.IndexOf(grupo.FechaFinVigencia) != -1)
                                                                 {
-                                                                    var iState = documentoProveedor
-                                                                        .Vault
-                                                                        .PropertyDefOperations
-                                                                        .GetBuiltInPropertyDef(MFBuiltInPropertyDef.MFBuiltInPropertyDefState)
-                                                                        .ID;
-
-                                                                    var classState = oPropertyValues.SearchForPropertyEx(iState, true).TypedValue.GetLookupID();
-
-                                                                    if (classState == grupo.ConfigurationWorkflow.WorkflowValidacionManual.EstadoDocumentoNoValido.ID)
+                                                                    if (!oPropertyValues.SearchForPropertyEx(grupo.FechaFinVigencia, true).TypedValue.IsNULL())
                                                                     {
-                                                                        oDocumentosVencidos.Add(documentoProveedor.ObjVer);
-
-                                                                        // Agregar el estatus "Vencido" al documento
-                                                                        ActualizarEstatusDocumento
-                                                                        (
-                                                                            "Documento",
-                                                                            documentoProveedor.ObjVer,
-                                                                            pd_EstatusDocumento,
-                                                                            2,
-                                                                            grupo.ConfigurationWorkflow.WorkflowChecklist.WorkflowValidacionesChecklist.ID,
-                                                                            grupo.ConfigurationWorkflow.WorkflowChecklist.EstadoDocumentoVencido.ID,
-                                                                            0,
-                                                                            documentoProveedor,
-                                                                            grupo.ConfigurationWorkflow.WorkflowDocumentoProveedor.WorkflowValidacionesDocProveedor.ID
-                                                                        );
+                                                                        // Obtener fecha fin de vigencia
+                                                                        var oFechaFinVigencia = oPropertyValues.SearchForPropertyEx(grupo.FechaFinVigencia, true).TypedValue.Value;
+                                                                        dtFechaFinVigencia = Convert.ToDateTime(oFechaFinVigencia);
                                                                     }
+                                                                }
 
-                                                                    if (classState == grupo.ConfigurationWorkflow.WorkflowValidacionManual.EstadoDocumentoValido.ID)
+                                                                while (iDateCompare >= 0)
+                                                                {
+                                                                    // Validar si la fecha del documento esta dentro del periodo obtenido
+                                                                    if (ValidaDocumentoDentroDeUnPeriodoDeFechas(
+                                                                        sFechaDeDocumento,
+                                                                        dtFechaInicioPeriodo,
+                                                                        dtFechaFinPeriodo) == true)
+                                                                    {
+                                                                        bDocumentoEncontradoEnPeriodo = true;
+                                                                    }                                                                    
+
+                                                                    // Crear nuevo periodo a partir de fecha fin que se convierte en la nueva fecha inicio
+                                                                    dtFechaInicioPeriodo = dtFechaFinPeriodo;
+                                                                    dtFechaFinPeriodo = ObtenerRangoDePeriodoDelDocumento
+                                                                    (
+                                                                        dtFechaInicioPeriodo,
+                                                                        claseDocumento.VigenciaDocumentoProveedor,
+                                                                        1
+                                                                    );
+
+                                                                    sFechaFin = "";
+                                                                    sFechaFin = dtFechaFinPeriodo.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture);
+
+                                                                    iDateCompare = DateTime.Compare
+                                                                    (
+                                                                        Convert.ToDateTime(sFechaActual), // t1
+                                                                        Convert.ToDateTime(sFechaFin)     // t2
+                                                                    );
+                                                                }
+
+                                                                // Validar vigencia de documento contra fecha actual o fecha fin de vigencia
+                                                                if (ValidarVigenciaDeDocumentoEnPeriodoActual(
+                                                                    claseDocumento.VigenciaDocumentoProveedor,
+                                                                    dtFechaDeDocumento,
+                                                                    dtFechaFinVigencia) == true)
+                                                                {
+                                                                    bDocumentoVigenteContraFechaActualOFechaFinDeVigencia = true;
+                                                                }
+                                                            }
+                                                            else
+                                                            {
+                                                                SysUtils.ReportInfoToEventLog("No hay fecha de documento en: ", documentoProveedor.Title);
+                                                            }
+
+                                                            if (bDocumentoValidacionManual == false)
+                                                            {
+                                                                if (claseDocumento.TipoValidacionVigenciaDocumento == "Por periodo")
+                                                                {
+                                                                    // Validar si la fecha del documento esta dentro del periodo obtenido
+                                                                    if (bDocumentoEncontradoEnPeriodo == true)
                                                                     {
                                                                         oDocumentosVigentesPorValidar.Add(documentoProveedor.ObjVer);
 
@@ -609,214 +527,309 @@ namespace Arkiva.MonitorFiscal.Checklist
                                                                             grupo.ConfigurationWorkflow.WorkflowDocumentoProveedor.WorkflowValidacionesDocProveedor.ID
                                                                         );
                                                                     }
-
-                                                                    // Mover el documento al estado de validacion manual terminado
-                                                                    var oLookup = new Lookup();
-                                                                    var oObjID = new ObjID();
-
-                                                                    oObjID.SetIDs
-                                                                    (
-                                                                        ObjType: (int)MFBuiltInObjectType.MFBuiltInObjectTypeDocument,
-                                                                        ID: documentoProveedor.ID
-                                                                    );
-
-                                                                    var checkedOutObjectVersion = documentoProveedor.Vault.ObjectOperations.CheckOut(oObjID);
-
-                                                                    var oPropertyValue = new PropertyValue
+                                                                    else
                                                                     {
-                                                                        PropertyDef = pd_EstadoValidacionManual
-                                                                    };
+                                                                        oDocumentosVencidos.Add(documentoProveedor.ObjVer);
 
-                                                                    oLookup.Item = 5; // Terminado
-
-                                                                    oPropertyValue.TypedValue.SetValueToLookup(oLookup);
-
-                                                                    documentoProveedor.Vault.ObjectPropertyOperations.SetProperty
-                                                                    (
-                                                                        ObjVer: checkedOutObjectVersion.ObjVer,
-                                                                        PropertyValue: oPropertyValue
-                                                                    );
-
-                                                                    documentoProveedor.Vault.ObjectOperations.CheckIn(checkedOutObjectVersion.ObjVer);
-                                                                }                                                                
-
-                                                                if (claseDocumento.TipoDocumentoChecklist == "Comprobante de pago")
+                                                                        // Agregar el estatus "Vencido" al documento
+                                                                        ActualizarEstatusDocumento
+                                                                        (
+                                                                            "Documento",
+                                                                            documentoProveedor.ObjVer,
+                                                                            pd_EstatusDocumento,
+                                                                            2,
+                                                                            grupo.ConfigurationWorkflow.WorkflowChecklist.WorkflowValidacionesChecklist.ID,
+                                                                            grupo.ConfigurationWorkflow.WorkflowChecklist.EstadoDocumentoVencido.ID,
+                                                                            0,
+                                                                            documentoProveedor,
+                                                                            grupo.ConfigurationWorkflow.WorkflowDocumentoProveedor.WorkflowValidacionesDocProveedor.ID
+                                                                        );
+                                                                    }
+                                                                }
+                                                                
+                                                                if (claseDocumento.TipoValidacionVigenciaDocumento == "Por fecha de vigencia")
                                                                 {
-                                                                    ObjVer oDocumentoRelacionado = new ObjVer();
-
-                                                                    // Buscar documento relacionado al comprobante de pago
-                                                                    if (oPropertyValues.IndexOf(claseDocumento.PropertyDefDocumentoRelacionado) != -1
-                                                                        && !oPropertyValues.SearchForPropertyEx(claseDocumento.PropertyDefDocumentoRelacionado, true).TypedValue.IsNULL())
+                                                                    // Validar si la fecha del documento esta dentro del periodo obtenido
+                                                                    if (bDocumentoEncontradoEnPeriodo == true)
                                                                     {
-                                                                        oDocumentoRelacionado = oPropertyValues
-                                                                            .SearchForPropertyEx(claseDocumento.PropertyDefDocumentoRelacionado, true)
-                                                                            .TypedValue
-                                                                            .GetValueAsLookup().GetAsObjVer();
+                                                                        oDocumentosVigentesPorValidar.Add(documentoProveedor.ObjVer);
+                                                                    }
+                                                                    else
+                                                                    {
+                                                                        oDocumentosVencidos.Add(documentoProveedor.ObjVer);
                                                                     }
 
-                                                                    // Enviar informacion a la tabla de comprobantes de pago
-                                                                    oQuery.InsertarComprobantesPago(
-                                                                        szNombreClaseDocumento,
-                                                                        documentoProveedor.ID,
-                                                                        nombreOTituloObjetoPadre.ToString(),
-                                                                        organizacion.ID,
-                                                                        oDocumentoRelacionado.ID);
+                                                                    // Validar vigencia de documento contra fecha actual o fecha fin de vigencia
+                                                                    if (bDocumentoVigenteContraFechaActualOFechaFinDeVigencia == true)
+                                                                    {
+                                                                        // Actualizar el estatus "Vigente" al documento
+                                                                        ActualizarEstatusDocumento
+                                                                        (
+                                                                            "Documento",
+                                                                            documentoProveedor.ObjVer,
+                                                                            pd_EstatusDocumento,
+                                                                            1,
+                                                                            grupo.ConfigurationWorkflow.WorkflowDocumentoProveedor.WorkflowValidacionesDocProveedor.ID,
+                                                                            grupo.ConfigurationWorkflow.WorkflowDocumentoProveedor.EstadoDocumentoVigenteProveedor.ID,
+                                                                            0,
+                                                                            documentoProveedor,
+                                                                            grupo.ConfigurationWorkflow.WorkflowDocumentoProveedor.WorkflowValidacionesDocProveedor.ID
+                                                                        );
+                                                                    }
+                                                                    else
+                                                                    {
+                                                                        // Agregar el estatus "Vencido" al documento
+                                                                        ActualizarEstatusDocumento
+                                                                        (
+                                                                            "Documento",
+                                                                            documentoProveedor.ObjVer,
+                                                                            pd_EstatusDocumento,
+                                                                            2,
+                                                                            grupo.ConfigurationWorkflow.WorkflowChecklist.WorkflowValidacionesChecklist.ID,
+                                                                            grupo.ConfigurationWorkflow.WorkflowChecklist.EstadoDocumentoVencido.ID,
+                                                                            0,
+                                                                            documentoProveedor,
+                                                                            grupo.ConfigurationWorkflow.WorkflowDocumentoProveedor.WorkflowValidacionesDocProveedor.ID
+                                                                        );
+                                                                    }
                                                                 }
                                                             }
-
-                                                            var sPeriodoDocumentoFaltante = ObtenerPeriodoDeDocumentoFaltante
-                                                                (
-                                                                    claseDocumento.VigenciaDocumentoProveedor,
-                                                                    dtFechaInicioPeriodo,
-                                                                    dtFechaFinPeriodo
-                                                                );
-
-                                                            if (oDocumentosVigentesPorValidar.Count < 1)
+                                                            else // Validacion manual es true
                                                             {
-                                                                // Se agrega al correo el nombre del documento no encontrado
-                                                                // en el periodo validado
-                                                                string ListaItems = LeerPlantilla(RutaLista);
-                                                                sChecklistDocumentName += ListaItems.Replace("[Documento]", szNombreClaseDocumento);
+                                                                var iState = documentoProveedor
+                                                                    .Vault
+                                                                    .PropertyDefOperations
+                                                                    .GetBuiltInPropertyDef(MFBuiltInPropertyDef.MFBuiltInPropertyDefState)
+                                                                    .ID;
 
-                                                                sPeriodoDocumentoProveedor = sPeriodoDocumentoFaltante;
+                                                                var classState = oPropertyValues.SearchForPropertyEx(iState, true).TypedValue.GetLookupID();
 
-                                                                // Modificar formato de la fecha del periodo del documento
-                                                                if (claseDocumento.VigenciaDocumentoProveedor == "Mensual" ||
-                                                                    claseDocumento.VigenciaDocumentoProveedor == "Bimestral" ||
-                                                                    claseDocumento.VigenciaDocumentoProveedor == "Trimestral" ||
-                                                                    claseDocumento.VigenciaDocumentoProveedor == "Cuatrimestral" ||
-                                                                    claseDocumento.VigenciaDocumentoProveedor == "Anual")
+                                                                if (classState == grupo.ConfigurationWorkflow.WorkflowValidacionManual.EstadoDocumentoNoValido.ID)
                                                                 {
-                                                                    sPeriodoDocumentoProveedor = dtFechaInicioPeriodo.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture);
+                                                                    oDocumentosVencidos.Add(documentoProveedor.ObjVer);
+
+                                                                    // Agregar el estatus "Vencido" al documento
+                                                                    ActualizarEstatusDocumento
+                                                                    (
+                                                                        "Documento",
+                                                                        documentoProveedor.ObjVer,
+                                                                        pd_EstatusDocumento,
+                                                                        2,
+                                                                        grupo.ConfigurationWorkflow.WorkflowChecklist.WorkflowValidacionesChecklist.ID,
+                                                                        grupo.ConfigurationWorkflow.WorkflowChecklist.EstadoDocumentoVencido.ID,
+                                                                        0,
+                                                                        documentoProveedor,
+                                                                        grupo.ConfigurationWorkflow.WorkflowDocumentoProveedor.WorkflowValidacionesDocProveedor.ID
+                                                                    );
                                                                 }
 
-                                                                if (claseDocumento.TipoDocumentoChecklist == "Documento checklist")
+                                                                if (classState == grupo.ConfigurationWorkflow.WorkflowValidacionManual.EstadoDocumentoValido.ID)
                                                                 {
+                                                                    oDocumentosVigentesPorValidar.Add(documentoProveedor.ObjVer);
 
+                                                                    // Actualizar el estatus "Vigente" al documento
+                                                                    ActualizarEstatusDocumento
+                                                                    (
+                                                                        "Documento",
+                                                                        documentoProveedor.ObjVer,
+                                                                        pd_EstatusDocumento,
+                                                                        1,
+                                                                        grupo.ConfigurationWorkflow.WorkflowDocumentoProveedor.WorkflowValidacionesDocProveedor.ID,
+                                                                        grupo.ConfigurationWorkflow.WorkflowDocumentoProveedor.EstadoDocumentoVigenteProveedor.ID,
+                                                                        0,
+                                                                        documentoProveedor,
+                                                                        grupo.ConfigurationWorkflow.WorkflowDocumentoProveedor.WorkflowValidacionesDocProveedor.ID
+                                                                    );
+                                                                }
+
+                                                                // Mover el documento al estado de validacion manual terminado
+                                                                var oLookup = new Lookup();
+                                                                var oObjID = new ObjID();
+
+                                                                oObjID.SetIDs
+                                                                (
+                                                                    ObjType: (int)MFBuiltInObjectType.MFBuiltInObjectTypeDocument,
+                                                                    ID: documentoProveedor.ID
+                                                                );
+
+                                                                var checkedOutObjectVersion = documentoProveedor.Vault.ObjectOperations.CheckOut(oObjID);
+
+                                                                var oPropertyValue = new PropertyValue
+                                                                {
+                                                                    PropertyDef = pd_EstadoValidacionManual
+                                                                };
+
+                                                                oLookup.Item = 5; // Terminado
+
+                                                                oPropertyValue.TypedValue.SetValueToLookup(oLookup);
+
+                                                                documentoProveedor.Vault.ObjectPropertyOperations.SetProperty
+                                                                (
+                                                                    ObjVer: checkedOutObjectVersion.ObjVer,
+                                                                    PropertyValue: oPropertyValue
+                                                                );
+
+                                                                documentoProveedor.Vault.ObjectOperations.CheckIn(checkedOutObjectVersion.ObjVer);
+                                                            }
+
+                                                            if (claseDocumento.TipoDocumentoChecklist == "Comprobante de pago")
+                                                            {
+                                                                ObjVer oDocumentoRelacionado = new ObjVer();
+
+                                                                // Buscar documento relacionado al comprobante de pago
+                                                                if (oPropertyValues.IndexOf(claseDocumento.PropertyDefDocumentoRelacionado) != -1
+                                                                    && !oPropertyValues.SearchForPropertyEx(claseDocumento.PropertyDefDocumentoRelacionado, true).TypedValue.IsNULL())
+                                                                {
+                                                                    oDocumentoRelacionado = oPropertyValues
+                                                                        .SearchForPropertyEx(claseDocumento.PropertyDefDocumentoRelacionado, true)
+                                                                        .TypedValue
+                                                                        .GetValueAsLookup().GetAsObjVer();
+                                                                }
+
+                                                                // Enviar informacion a la tabla de comprobantes de pago
+                                                                oQuery.InsertarComprobantesPago(
+                                                                    szNombreClaseDocumento,
+                                                                    documentoProveedor.ID,
+                                                                    nombreOTituloObjetoPadre.ToString(),
+                                                                    organizacion.ID,
+                                                                    oDocumentoRelacionado.ID);
+                                                            }
+                                                        }
+
+                                                        var sPeriodoDocumentoFaltante = ObtenerPeriodoDeDocumentoFaltante
+                                                            (
+                                                                claseDocumento.VigenciaDocumentoProveedor,
+                                                                dtFechaInicioPeriodo,
+                                                                dtFechaFinPeriodo
+                                                            );
+
+                                                        if (oDocumentosVigentesPorValidar.Count < 1)
+                                                        {
+                                                            // Se agrega al correo el nombre del documento no encontrado
+                                                            // en el periodo validado
+                                                            string ListaItems = LeerPlantilla(RutaLista);
+                                                            sChecklistDocumentName += ListaItems.Replace("[Documento]", szNombreClaseDocumento);
+
+                                                            sPeriodoDocumentoProveedor = sPeriodoDocumentoFaltante;
+
+                                                            // Modificar formato de la fecha del periodo del documento
+                                                            if (claseDocumento.VigenciaDocumentoProveedor == "Mensual" ||
+                                                                claseDocumento.VigenciaDocumentoProveedor == "Bimestral" ||
+                                                                claseDocumento.VigenciaDocumentoProveedor == "Trimestral" ||
+                                                                claseDocumento.VigenciaDocumentoProveedor == "Cuatrimestral" ||
+                                                                claseDocumento.VigenciaDocumentoProveedor == "Anual")
+                                                            {
+                                                                sPeriodoDocumentoProveedor = dtFechaInicioPeriodo.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture);
+                                                            }
+
+                                                            if (claseDocumento.TipoDocumentoChecklist == "Documento checklist")
+                                                            {
+
+                                                                // Insert
+                                                                oQuery.InsertarDocumentosFaltantesChecklist(
+                                                                    bDelete,
+                                                                    sProveedor: nombreOTituloObjetoPadre.ToString(),
+                                                                    iProveedorID: organizacion.ObjVer.ID,
+                                                                    sCategoria: "Documento Vencido",
+                                                                    sTipoDocumento: "Documento Proveedor",
+                                                                    sNombreDocumento: szNombreClaseDocumento,
+                                                                    iDocumentoID: claseDocumento.DocumentoProveedor.ID,
+                                                                    iClaseID: claseDocumento.DocumentoProveedor.ID,
+                                                                    sVigencia: claseDocumento.VigenciaDocumentoProveedor,
+                                                                    sPeriodo: sPeriodoDocumentoProveedor);
+                                                            }
+
+                                                            sPeriodoVencimientoDocumentoLO += sPeriodoDocumentoProveedor + "<br/>";
+
+                                                            bNotification = true;
+                                                            bConcatenateDocument = true;
+                                                        }
+
+                                                        // Enviar los documentos vencidos a la tabla de documentos faltantes checklist 
+                                                        foreach (var documento in oDocumentosVencidos)
+                                                        {
+                                                            sPeriodoDocumentoProveedor = sPeriodoDocumentoFaltante;
+
+                                                            // Modificar formato de la fecha del periodo del documento
+                                                            if (claseDocumento.VigenciaDocumentoProveedor == "Mensual" ||
+                                                                claseDocumento.VigenciaDocumentoProveedor == "Bimestral" ||
+                                                                claseDocumento.VigenciaDocumentoProveedor == "Trimestral" ||
+                                                                claseDocumento.VigenciaDocumentoProveedor == "Cuatrimestral" ||
+                                                                claseDocumento.VigenciaDocumentoProveedor == "Anual")
+                                                            {
+                                                                sPeriodoDocumentoProveedor = dtFechaInicioPeriodo.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture);
+                                                            }
+
+                                                            if (claseDocumento.TipoDocumentoChecklist == "Documento checklist")
+                                                            {
+                                                                SysUtils.ReportInfoToEventLog("Insertando documento: " + documento.ID + " en la tabla DocumentosCaducados");
+
+                                                                if (bValidaDocumentoPorProyecto == true)
+                                                                {
+                                                                    foreach (var proyecto in searchResultsProyectoPorProveedor)
+                                                                    {
+                                                                        var pd_DocumentosRelacionadosAlProyecto = proyecto.Vault.PropertyDefOperations.GetPropertyDefIDByAlias("PD.Document");
+                                                                        var oPropertiesProyecto = proyecto.Properties;
+
+                                                                        var oListDocumentosProyecto = oPropertiesProyecto
+                                                                            .SearchForPropertyEx(pd_DocumentosRelacionadosAlProyecto, true)
+                                                                            .TypedValue
+                                                                            .GetValueAsLookups()
+                                                                            .ToObjVerExs(proyecto.Vault);
+
+                                                                        foreach (var documentoProyecto in oListDocumentosProyecto)
+                                                                        {
+                                                                            if (documento.ID == documentoProyecto.ObjVer.ID)
+                                                                            {
+                                                                                // Insert la tabla de documentos caducados
+                                                                                oQuery.InsertarDocumentosCaducados(
+                                                                                    sProveedor: nombreOTituloObjetoPadre.ToString(),
+                                                                                    iProveedorID: organizacion.ObjVer.ID,
+                                                                                    sProyecto: proyecto.Title,
+                                                                                    iProyectoID: proyecto.ID,
+                                                                                    sCategoria: "Documento Vencido",
+                                                                                    sTipoDocumento: "Documento Proveedor",
+                                                                                    sNombreDocumento: szNombreClaseDocumento,
+                                                                                    iDocumentoID: documento.ID,
+                                                                                    iClaseID: claseDocumento.DocumentoProveedor.ID,
+                                                                                    sVigencia: claseDocumento.VigenciaDocumentoProveedor,
+                                                                                    sPeriodo: sPeriodoDocumentoProveedor);
+                                                                            }
+                                                                            else
+                                                                            {
+                                                                                // Enviar a la tabla de documentos faltantes
+                                                                                oQuery.InsertarDocumentosFaltantesChecklist(
+                                                                                    bDelete,
+                                                                                    sProveedor: nombreOTituloObjetoPadre.ToString(),
+                                                                                    iProveedorID: organizacion.ObjVer.ID,
+                                                                                    sProyecto: proyecto.Title,
+                                                                                    iProyectoID: proyecto.ID,
+                                                                                    sCategoria: "Documento Faltante",
+                                                                                    sTipoDocumento: "Documento Proveedor",
+                                                                                    sNombreDocumento: szNombreClaseDocumento,
+                                                                                    iDocumentoID: 0,
+                                                                                    iClaseID: claseDocumento.DocumentoProveedor.ID,
+                                                                                    sVigencia: claseDocumento.VigenciaDocumentoProveedor,
+                                                                                    sPeriodo: sPeriodoDocumentoProveedor);
+                                                                            }
+                                                                        }
+                                                                    }
+                                                                }
+                                                                else
+                                                                {
                                                                     // Insert
-                                                                    oQuery.InsertarDocumentosFaltantesChecklist(
-                                                                        bDelete,
+                                                                    oQuery.InsertarDocumentosCaducados(
                                                                         sProveedor: nombreOTituloObjetoPadre.ToString(),
                                                                         iProveedorID: organizacion.ObjVer.ID,
                                                                         sCategoria: "Documento Vencido",
                                                                         sTipoDocumento: "Documento Proveedor",
                                                                         sNombreDocumento: szNombreClaseDocumento,
-                                                                        iDocumentoID: claseDocumento.DocumentoProveedor.ID,
+                                                                        iDocumentoID: documento.ID,
                                                                         iClaseID: claseDocumento.DocumentoProveedor.ID,
                                                                         sVigencia: claseDocumento.VigenciaDocumentoProveedor,
                                                                         sPeriodo: sPeriodoDocumentoProveedor);
                                                                 }
-
-                                                                sPeriodoVencimientoDocumentoLO += sPeriodoDocumentoProveedor + "<br/>";
-
-                                                                bNotification = true;
-                                                                bConcatenateDocument = true;
                                                             }
-
-                                                            // Enviar los documentos vencidos a la tabla de documentos faltantes checklist 
-                                                            foreach (var documento in oDocumentosVencidos)
-                                                            {
-                                                                sPeriodoDocumentoProveedor = sPeriodoDocumentoFaltante;
-
-                                                                // Modificar formato de la fecha del periodo del documento
-                                                                if (claseDocumento.VigenciaDocumentoProveedor == "Mensual" ||
-                                                                    claseDocumento.VigenciaDocumentoProveedor == "Bimestral" ||
-                                                                    claseDocumento.VigenciaDocumentoProveedor == "Trimestral" ||
-                                                                    claseDocumento.VigenciaDocumentoProveedor == "Cuatrimestral" ||
-                                                                    claseDocumento.VigenciaDocumentoProveedor == "Anual")
-                                                                {
-                                                                    sPeriodoDocumentoProveedor = dtFechaInicioPeriodo.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture);
-                                                                }
-
-                                                                if (claseDocumento.TipoDocumentoChecklist == "Documento checklist")
-                                                                {
-                                                                    SysUtils.ReportInfoToEventLog("Insertando documento: " + documento.ID + " en la tabla DocumentosCaducados");
-
-                                                                    if (bValidaDocumentoPorProyecto == true)
-                                                                    {
-                                                                        foreach (var proyecto in searchResultsProyectoPorProveedor)
-                                                                        {
-                                                                            var pd_DocumentosRelacionadosAlProyecto = proyecto.Vault.PropertyDefOperations.GetPropertyDefIDByAlias("PD.Document");
-                                                                            var oPropertiesProyecto = proyecto.Properties;
-
-                                                                            var oListDocumentosProyecto = oPropertiesProyecto
-                                                                                .SearchForPropertyEx(pd_DocumentosRelacionadosAlProyecto, true)
-                                                                                .TypedValue
-                                                                                .GetValueAsLookups()
-                                                                                .ToObjVerExs(proyecto.Vault);
-
-                                                                            foreach (var documentoProyecto in oListDocumentosProyecto)
-                                                                            {
-                                                                                if (documento.ID == documentoProyecto.ObjVer.ID)
-                                                                                {
-                                                                                    // Insert la tabla de documentos caducados
-                                                                                    oQuery.InsertarDocumentosCaducados(
-                                                                                        sProveedor: nombreOTituloObjetoPadre.ToString(),
-                                                                                        iProveedorID: organizacion.ObjVer.ID,
-                                                                                        sProyecto: proyecto.Title,
-                                                                                        iProyectoID: proyecto.ID,
-                                                                                        sCategoria: "Documento Vencido",
-                                                                                        sTipoDocumento: "Documento Proveedor",
-                                                                                        sNombreDocumento: szNombreClaseDocumento,
-                                                                                        iDocumentoID: documento.ID,
-                                                                                        iClaseID: claseDocumento.DocumentoProveedor.ID,
-                                                                                        sVigencia: claseDocumento.VigenciaDocumentoProveedor,
-                                                                                        sPeriodo: sPeriodoDocumentoProveedor);
-                                                                                }
-                                                                                else
-                                                                                {
-                                                                                    // Enviar a la tabla de documentos faltantes
-                                                                                    oQuery.InsertarDocumentosFaltantesChecklist(
-                                                                                        bDelete,
-                                                                                        sProveedor: nombreOTituloObjetoPadre.ToString(),
-                                                                                        iProveedorID: organizacion.ObjVer.ID,
-                                                                                        sProyecto: proyecto.Title,
-                                                                                        iProyectoID: proyecto.ID,
-                                                                                        sCategoria: "Documento Faltante",
-                                                                                        sTipoDocumento: "Documento Proveedor",
-                                                                                        sNombreDocumento: szNombreClaseDocumento,
-                                                                                        iDocumentoID: 0,
-                                                                                        iClaseID: claseDocumento.DocumentoProveedor.ID,
-                                                                                        sVigencia: claseDocumento.VigenciaDocumentoProveedor,
-                                                                                        sPeriodo: sPeriodoDocumentoProveedor);
-                                                                                }
-                                                                            }
-                                                                        }
-                                                                    }
-                                                                    else
-                                                                    {
-                                                                        // Insert
-                                                                        oQuery.InsertarDocumentosCaducados(
-                                                                            sProveedor: nombreOTituloObjetoPadre.ToString(),
-                                                                            iProveedorID: organizacion.ObjVer.ID,
-                                                                            sCategoria: "Documento Vencido",
-                                                                            sTipoDocumento: "Documento Proveedor",
-                                                                            sNombreDocumento: szNombreClaseDocumento,
-                                                                            iDocumentoID: documento.ID,
-                                                                            iClaseID: claseDocumento.DocumentoProveedor.ID,
-                                                                            sVigencia: claseDocumento.VigenciaDocumentoProveedor,
-                                                                            sPeriodo: sPeriodoDocumentoProveedor);
-                                                                    }
-                                                                }
-                                                            }
-
-                                                            // Crear nuevo periodo a partir de fecha fin que se convierte en la nueva fecha inicio
-                                                            dtFechaInicioPeriodo = dtFechaFinPeriodo;
-                                                            dtFechaFinPeriodo = ObtenerRangoDePeriodoDelDocumento
-                                                            (
-                                                                dtFechaInicioPeriodo,
-                                                                claseDocumento.VigenciaDocumentoProveedor,
-                                                                1
-                                                            );
-
-                                                            sFechaFin = "";
-                                                            sFechaFin = dtFechaFinPeriodo.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture);
-
-                                                            iDateCompare = DateTime.Compare
-                                                            (
-                                                                Convert.ToDateTime(sFechaActual), // t1
-                                                                Convert.ToDateTime(sFechaFin)     // t2
-                                                            );
                                                         }
 
                                                         if (oDocumentosVigentesPorValidar.Count > 0)
@@ -1852,7 +1865,7 @@ namespace Arkiva.MonitorFiscal.Checklist
                                                                                     if (claseEmpleadoLO.TipoValidacionVigenciaDocumento == "Por periodo")
                                                                                     {
                                                                                         // Validar si la fecha del documento esta dentro del periodo obtenido
-                                                                                        if (ComparaFechaBaseContraUnaFechaInicioYFechaFin(
+                                                                                        if (ValidaDocumentoDentroDeUnPeriodoDeFechas(
                                                                                         sFechaDeDocumento,
                                                                                         dtFechaInicioPeriodo,
                                                                                         dtFechaFinPeriodo) == true)
@@ -1895,7 +1908,7 @@ namespace Arkiva.MonitorFiscal.Checklist
                                                                                     else // Es Por fecha de vigencia
                                                                                     {
                                                                                         // Validar si la fecha del documento esta dentro del periodo obtenido
-                                                                                        if (ComparaFechaBaseContraUnaFechaInicioYFechaFin(
+                                                                                        if (ValidaDocumentoDentroDeUnPeriodoDeFechas(
                                                                                         sFechaDeDocumento,
                                                                                         dtFechaInicioPeriodo,
                                                                                         dtFechaFinPeriodo) == true)
@@ -2672,7 +2685,7 @@ namespace Arkiva.MonitorFiscal.Checklist
 
             string sFechaDocumento = dtFechaDocumento.ToString("yyyy-MM-dd");
 
-            if (ComparaFechaBaseContraUnaFechaInicioYFechaFin(sFechaDocumento, dtFechaInicio, dtFechaFin) == true)
+            if (ValidaDocumentoDentroDeUnPeriodoDeFechas(sFechaDocumento, dtFechaInicio, dtFechaFin) == true)
             {
                 bDocumentoVigente = true;
             }
@@ -2714,7 +2727,7 @@ namespace Arkiva.MonitorFiscal.Checklist
             return diferenciaEnDias;
         }
 
-        private bool ComparaFechaBaseContraUnaFechaInicioYFechaFin(
+        private bool ValidaDocumentoDentroDeUnPeriodoDeFechas(
             string sFechaBase,
             DateTime? dtFechaInicio,
             DateTime? dtFechaFin)
@@ -3048,7 +3061,7 @@ namespace Arkiva.MonitorFiscal.Checklist
                 {
                     var sFecha = fecha.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture);
 
-                    if (ComparaFechaBaseContraUnaFechaInicioYFechaFin(sFecha, dtFechaInicio, dtFechaFin) == true)
+                    if (ValidaDocumentoDentroDeUnPeriodoDeFechas(sFecha, dtFechaInicio, dtFechaFin) == true)
                     {
                         sFechaResultante = sFecha;
                     }
@@ -3077,7 +3090,7 @@ namespace Arkiva.MonitorFiscal.Checklist
                 {
                     var sFecha = fecha.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture);
 
-                    if (ComparaFechaBaseContraUnaFechaInicioYFechaFin(sFecha, dtFechaInicio, dtFechaFin) == true)
+                    if (ValidaDocumentoDentroDeUnPeriodoDeFechas(sFecha, dtFechaInicio, dtFechaFin) == true)
                     {
                         sFechaResultante = sFecha;
                     }
