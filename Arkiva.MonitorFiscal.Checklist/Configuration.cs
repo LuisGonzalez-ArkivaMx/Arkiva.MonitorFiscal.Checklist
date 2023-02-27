@@ -105,10 +105,10 @@ namespace Arkiva.MonitorFiscal.Checklist
         //[JsonConfEditor(IsRequired = false, DefaultValue = null, Label = "Propiedad Proveedor SE No Documental")]
         //public MFIdentifier PropertyDefProveedorSENoDocumentos { get; set; }
 
-        //[DataMember]
-        //[MFObjType(AllowEmpty = true)]
-        //[JsonConfEditor(IsRequired = false, DefaultValue = null, Label = "Objeto de tipo documento")]
-        //public MFIdentifier Checklist { get; set; }
+        [DataMember]
+        [MFObjType(AllowEmpty = true)]
+        [JsonConfEditor(IsRequired = true, Label = "Tipo de empleado", HelpText = "Definir el tipo de objeto para el empleado de la organizacion")]
+        public MFIdentifier ObjetoEmpleado { get; set; }
 
         //[DataMember]
         //[MFPropertyDef(AllowEmpty = true)]

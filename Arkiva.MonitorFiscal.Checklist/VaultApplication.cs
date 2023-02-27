@@ -77,9 +77,9 @@ namespace Arkiva.MonitorFiscal.Checklist
                             if (grupo.GroupEnabled.Equals("Yes") && ValidaDocumentoDentroDeUnPeriodoDeFechas(sFechaActual, grupo.FechaInicio, grupo.FechaFin) == true)
                             {
                                 // Inicializar objetos, clases y propiedades
-                                var ot_ContactoExternoSE = PermanentVault
-                                    .ObjectTypeOperations
-                                    .GetObjectTypeIDByAlias("MF.OT.ExternalContact");
+                                //var ot_ContactoExternoSE = PermanentVault
+                                //    .ObjectTypeOperations
+                                //    .GetObjectTypeIDByAlias("MF.OT.ExternalContact");
 
                                 var pd_EstatusDocumento = PermanentVault
                                     .PropertyDefOperations
@@ -1378,7 +1378,7 @@ namespace Arkiva.MonitorFiscal.Checklist
                                             // Filtros: Nombre de proveedor, estatus
                                             var sbContactosExternosSE = new MFSearchBuilder(PermanentVault);
                                             sbContactosExternosSE.Deleted(false);
-                                            sbContactosExternosSE.ObjType(ot_ContactoExternoSE);
+                                            sbContactosExternosSE.ObjType(grupo.ObjetoEmpleado);
                                             sbContactosExternosSE.Property
                                             (
                                                 grupo.PropertyDefProveedorSEDocumentos, // Owner (Proveedor SE) - ID: 1730
@@ -2062,7 +2062,7 @@ namespace Arkiva.MonitorFiscal.Checklist
                                                                                 contactoExterno.ObjVer,
                                                                                 pd_EstatusContactoExternoSE,
                                                                                 2, 0, 0,
-                                                                                ot_ContactoExternoSE
+                                                                                grupo.ObjetoEmpleado.ID
                                                                             );
                                                                         }
                                                                         else
@@ -2104,7 +2104,7 @@ namespace Arkiva.MonitorFiscal.Checklist
                                                                                 contactoExterno.ObjVer,
                                                                                 pd_EstatusContactoExternoSE,
                                                                                 1, 0, 0,
-                                                                                ot_ContactoExternoSE
+                                                                                grupo.ObjetoEmpleado.ID
                                                                             );
 
                                                                             // Concatenar los documentos al contacto externo correspondiente
@@ -2268,7 +2268,7 @@ namespace Arkiva.MonitorFiscal.Checklist
                                                                             contactoExterno.ObjVer,
                                                                             pd_EstatusContactoExternoSE,
                                                                             1, 0, 0,
-                                                                            ot_ContactoExternoSE
+                                                                            grupo.ObjetoEmpleado.ID
                                                                         );
 
                                                                         // Concatenar los documentos al contacto externo correspondiente
@@ -2427,7 +2427,7 @@ namespace Arkiva.MonitorFiscal.Checklist
                                                     Configuration.ConfigurationServiciosGenerales.ConfigurationNotificaciones.UsernameService,
                                                     Configuration.ConfigurationServiciosGenerales.ConfigurationNotificaciones.PasswordService) == true)
                                                 {
-                                                    SysUtils.ReportInfoToEventLog("Fin del proceso, el correo ha sido enviado exitosamente.");
+                                                    SysUtils.ReportInfoToEventLog("Fin del proceso, el correo ha sido enviado exitosamente a: " + nombreOTituloObjetoPadre.ToString());
                                                 }
                                             }
                                         }
